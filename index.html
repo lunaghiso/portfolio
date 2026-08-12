@@ -116,20 +116,20 @@
   .hero-video-wrap { position:absolute; inset:0; z-index:0; overflow:hidden; background:#000; }
   .hero-video-wrap video {
     width:100%; height:100%; object-fit:cover;
-    opacity:0.42; filter:saturate(0.55) brightness(0.55) contrast(1.02);
+    opacity:1; filter:none;
   }
-  /* darkening layers so the title stays readable */
+  /* light gradient only where text sits, so the trailer reads at full brightness */
   .hero-video-wrap::after {
     content:''; position:absolute; inset:0;
     background:linear-gradient(to bottom,
-      rgba(12,13,15,0.55) 0%,
-      rgba(12,13,15,0.35) 40%,
-      rgba(12,13,15,0.8) 82%,
-      rgba(12,13,15,1) 100%);
+      rgba(12,13,15,0.15) 0%,
+      rgba(12,13,15,0.05) 40%,
+      rgba(12,13,15,0.45) 85%,
+      rgba(12,13,15,0.95) 100%);
   }
   .hero-overlay {
     position:absolute; inset:0; z-index:1;
-    background:radial-gradient(ellipse 90% 70% at 50% 45%, transparent 40%, rgba(12,13,15,0.5) 100%);
+    background:radial-gradient(ellipse 90% 70% at 50% 45%, transparent 55%, rgba(12,13,15,0.25) 100%);
   }
   .hero-content {
     position:relative; z-index:2; max-width:1100px; width:100%; margin:0 auto;
@@ -410,14 +410,14 @@
   <div class="showreel-inner">
     <div class="showreel-head reveal">
       <div class="section-label">2026 Showreel</div>
-      <h2 class="section-title">Reels</h2>
+      <h2 class="section-title">My Best Work</h2>
     </div>
 
     <div class="reel-tabs reveal reveal-delay-1" role="tablist">
-      <button class="reel-tab active" data-reel="anim" role="tab" aria-selected="true">Anim Reel</button>
-      <button class="reel-tab" data-reel="char" role="tab" aria-selected="false">3D Char Reel</button>
-      <button class="reel-tab" data-reel="cfx" role="tab" aria-selected="false">CFX Reel</button>
-      <button class="reel-tab" data-reel="unreal" role="tab" aria-selected="false">Unreal Reel</button>
+      <button class="reel-tab active" data-reel="anim" role="tab" aria-selected="true">Animation</button>
+      <button class="reel-tab" data-reel="char" role="tab" aria-selected="false">3D Generalist</button>
+      <button class="reel-tab" data-reel="cfx" role="tab" aria-selected="false">CFX Artist</button>
+      <button class="reel-tab" data-reel="unreal" role="tab" aria-selected="false">Unreal Engine Works</button>
     </div>
 
     <div class="video-player reveal reveal-delay-1">
