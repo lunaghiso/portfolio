@@ -34,22 +34,39 @@
   /* ── MOON CURSOR (moon inside a circle) ── */
   #cursor-moon {
     position: fixed; z-index: 99999; pointer-events: none;
-    width: 26px; height: 26px;
+    width: 40px; height: 40px;
     transform: translate(-50%, -50%);
-    transition: transform 0.08s ease;
+    transition: transform 0.08s ease, filter 0.3s ease;
     filter: drop-shadow(0 0 6px rgba(218,98,125,0.8));
   }
   #cursor-moon svg { width:100%; height:100%; display:block; }
+  .cursor-hover #cursor-moon {
+    filter: drop-shadow(0 0 10px rgba(255,165,171,1)) drop-shadow(0 0 22px rgba(218,98,125,0.9));
+  }
   #cursor-ring {
     position: fixed; z-index: 99998; pointer-events: none;
-    width: 40px; height: 40px;
+    width: 56px; height: 56px;
     border: 1px solid rgba(218,98,125,0.4);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     transition: width 0.3s ease, height 0.3s ease, opacity 0.3s, border-color 0.3s;
     opacity: 0.6;
   }
-  .cursor-hover #cursor-ring { width: 58px; height: 58px; border-color: var(--accent-2); opacity:0.9; }
+  .cursor-hover #cursor-ring { width: 76px; height: 76px; border-color: var(--accent-2); opacity:0.95; box-shadow:0 0 18px rgba(218,98,125,0.5); }
+
+  /* pink star particles that spawn on hover */
+  .cursor-star {
+    position: fixed; z-index: 99997; pointer-events: none;
+    width: 12px; height: 12px;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+    animation: starPop 0.7s ease-out forwards;
+  }
+  .cursor-star svg { width:100%; height:100%; display:block; filter: drop-shadow(0 0 4px rgba(255,165,171,0.9)); }
+  @keyframes starPop {
+    0%   { transform: translate(-50%,-50%) scale(0) rotate(0deg); opacity:0; }
+    30%  { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(60deg); opacity:1; }
+    100% { transform: translate(calc(-50% + var(--dx)*1.8), calc(-50% + var(--dy)*1.8 + 14px)) scale(0.2) rotate(160deg); opacity:0; }
+  }
 
   html { scroll-behavior: smooth; }
   body {
@@ -150,13 +167,13 @@
   }
   .hero-desc-wrap { animation:fadeUp 0.9s ease 0.85s both; padding-bottom:14px; position:relative; }
   .hero-desc-label {
-    font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.28em;
-    color:var(--accent); text-transform:uppercase; margin-bottom:14px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.28em;
+    color:var(--accent); text-transform:uppercase; margin-bottom:16px;
     display:flex; align-items:center; gap:12px;
   }
   .hero-desc-label span { display:inline-block; width:26px; height:1px; background:var(--accent); }
-  .hero-desc { font-size:15px; line-height:1.75; color:var(--text-dim); max-width:400px; }
-  .hero-desc b { color:var(--text); font-weight:600; }
+  .hero-desc { font-size:19px; line-height:1.75; color:var(--text); max-width:440px; }
+  .hero-desc b { color:#fff; font-weight:600; }
 
   @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
 
@@ -207,6 +224,40 @@
   .reel-pad { padding:56.25% 0 0 0; position:relative; }
   .reel-pad iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
 
+  /* click-to-play poster (keeps custom cursor working, no autoplay) */
+  .reel-poster {
+    position:absolute; inset:0; z-index:3;
+    background-color:#141013;
+    background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .reel-poster::before {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(to top, rgba(12,13,15,0.5), rgba(12,13,15,0.15));
+    transition:background 0.3s;
+  }
+  .reel-poster:hover::before { background:linear-gradient(to top, rgba(218,98,125,0.28), rgba(12,13,15,0.1)); }
+  .reel-poster-label {
+    position:absolute; bottom:22px; left:26px; z-index:2;
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em;
+    text-transform:uppercase; color:var(--text-dim);
+  }
+  .reel-play {
+    position:relative; z-index:2;
+    width:74px; height:74px; border-radius:50%;
+    background:var(--accent); display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 0 rgba(218,98,125,0.6), 0 10px 30px rgba(0,0,0,0.5);
+    transition:transform 0.25s, box-shadow 0.25s, background 0.25s;
+    animation:playPulse 2.4s ease-out infinite;
+  }
+  .reel-poster:hover .reel-play { transform:scale(1.12); background:var(--accent-2); }
+  .reel-play svg { width:26px; height:26px; margin-left:4px; fill:#fff; }
+  @keyframes playPulse {
+    0%   { box-shadow:0 0 0 0 rgba(218,98,125,0.55), 0 10px 30px rgba(0,0,0,0.5); }
+    70%  { box-shadow:0 0 0 22px rgba(218,98,125,0), 0 10px 30px rgba(0,0,0,0.5); }
+    100% { box-shadow:0 0 0 0 rgba(218,98,125,0), 0 10px 30px rgba(0,0,0,0.5); }
+  }
+
   /* ── SKILLS ── */
   #skills { background:var(--bg); border-top:1px solid var(--line); }
   .skills-inner { max-width:1100px; margin:0 auto; position:relative; z-index:2; }
@@ -221,11 +272,7 @@
     position:relative; overflow:hidden;
   }
   .skill-card:hover { border-color:rgba(255,255,255,0.18); transform:translateY(-4px); }
-  .skill-num {
-    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em;
-    color:var(--accent); margin-bottom:18px; display:block;
-  }
-  .skill-name { font-family:'Montserrat',sans-serif; font-weight:700; font-size:17px; letter-spacing:0.01em; color:var(--text); margin-bottom:12px; }
+  .skill-name { font-family:'Montserrat',sans-serif; font-weight:700; font-size:18px; letter-spacing:0.01em; color:var(--text); margin-bottom:12px; }
   .skill-desc { font-size:13px; line-height:1.72; color:var(--text-dim); }
   .skill-tags { margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; }
   .skill-tag {
@@ -361,9 +408,8 @@
 
 <!-- MOON CURSOR (moon inside circle) -->
 <div id="cursor-moon">
-  <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- crescent moon -->
-    <path d="M16.5 13a5.5 5.5 0 1 1-6-5.48A4.3 4.3 0 0 0 16.5 13z" fill="#ECECEA"/>
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M27 20a11 11 0 1 1-11-11 8.5 8.5 0 0 0 11 11z" fill="#F5E9EC"/>
   </svg>
 </div>
 <div id="cursor-ring"></div>
@@ -396,7 +442,7 @@
   <div class="hero-overlay"></div>
 
   <div class="hero-content">
-    <h1 class="hero-title">3D Animator &amp;<br>Character Artist</h1>
+    <h1 class="hero-title">Animator &amp;<br>Character Artist</h1>
     <div class="hero-desc-wrap">
       <div class="hero-desc-label"><span></span> About Me</div>
       <p class="hero-desc">3D Artist focused on <b>character animation and visual storytelling</b>. Versatile across departments and equally at home in <b>audiovisuals, cinema and video games</b>.</p>
@@ -421,36 +467,48 @@
     </div>
 
     <div class="video-player reveal reveal-delay-1">
-      <!-- ANIM REEL (shown first) -->
+      <!-- ANIMATION (shown first) -->
       <div class="reel-frame active" data-reel="anim">
         <div class="reel-pad">
-          <iframe src="https://player.vimeo.com/video/1056564167?h=9705d9cd02&amp;badge=0&amp;autopause=0&amp;autoplay=1&amp;muted=1&amp;loop=1&amp;player_id=0&amp;app_id=58479"
-            allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-            referrerpolicy="strict-origin-when-cross-origin" title="Anim Reel — Luna Ghiso Briosso"></iframe>
+          <div class="reel-poster" role="button" tabindex="0"
+               data-src="https://player.vimeo.com/video/1056564167?h=9705d9cd02&amp;autoplay=1&amp;title=0&amp;byline=0&amp;portrait=0"
+               style="background-image:url('https://i.vimeocdn.com/video/2187949082-43e29dda82e4f5d5632582377317f966e59506f258df0472b4a4056d64f75fb5-d_1280?region=us')">
+            <div class="reel-poster-label">Animation</div>
+            <div class="reel-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
         </div>
       </div>
-      <!-- 3D CHAR REEL -->
+      <!-- 3D GENERALIST -->
       <div class="reel-frame" data-reel="char">
         <div class="reel-pad">
-          <iframe data-src="https://player.vimeo.com/video/1053531185?h=55fb23b7eb&amp;badge=0&amp;autopause=0&amp;autoplay=1&amp;muted=1&amp;loop=1&amp;player_id=0&amp;app_id=58479"
-            allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-            referrerpolicy="strict-origin-when-cross-origin" title="3D Character Reel — Luna Ghiso Briosso"></iframe>
+          <div class="reel-poster" role="button" tabindex="0"
+               data-src="https://player.vimeo.com/video/1053531185?h=55fb23b7eb&amp;autoplay=1&amp;title=0&amp;byline=0&amp;portrait=0"
+               style="background-image:url('https://i.vimeocdn.com/video/2188945925-15fc61455666b845d31b2fbe261b56ee6ae175942c593557fc08dead1324278d-d_1280?region=us')">
+            <div class="reel-poster-label">3D Generalist</div>
+            <div class="reel-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
         </div>
       </div>
-      <!-- CFX REEL -->
+      <!-- CFX ARTIST -->
       <div class="reel-frame" data-reel="cfx">
         <div class="reel-pad">
-          <iframe data-src="https://player.vimeo.com/video/1217091091?h=2f3f284a2f&amp;badge=0&amp;autopause=0&amp;autoplay=1&amp;muted=1&amp;loop=1&amp;player_id=0&amp;app_id=58479"
-            allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-            referrerpolicy="strict-origin-when-cross-origin" title="CFX Reel — Luna Ghiso Briosso"></iframe>
+          <div class="reel-poster" role="button" tabindex="0"
+               data-src="https://player.vimeo.com/video/1217091091?h=2f3f284a2f&amp;autoplay=1&amp;title=0&amp;byline=0&amp;portrait=0"
+               style="background-image:url('https://i.vimeocdn.com/video/2188927015-9733c2ce09a56de0f6f5748e96a97bba7e7af6e5e6b32c308083e540ca6fa84a-d_1280?region=us')">
+            <div class="reel-poster-label">CFX Artist</div>
+            <div class="reel-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
         </div>
       </div>
-      <!-- UNREAL REEL -->
+      <!-- UNREAL ENGINE WORKS -->
       <div class="reel-frame" data-reel="unreal">
         <div class="reel-pad">
-          <iframe data-src="https://player.vimeo.com/video/1187644042?h=f1000bd864&amp;badge=0&amp;autopause=0&amp;autoplay=1&amp;muted=1&amp;loop=1&amp;player_id=0&amp;app_id=58479"
-            allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-            referrerpolicy="strict-origin-when-cross-origin" title="Unreal Reel — Luna Ghiso Briosso"></iframe>
+          <div class="reel-poster" role="button" tabindex="0"
+               data-src="https://player.vimeo.com/video/1187644042?h=f1000bd864&amp;autoplay=1&amp;title=0&amp;byline=0&amp;portrait=0"
+               style="background-image:url('https://i.vimeocdn.com/video/2151703010-8078aec283d0f673487a1e1144910abf1b4ab62823ba85628f25061d88a6b864-d_1280?region=us')">
+            <div class="reel-poster-label">Unreal Engine Works</div>
+            <div class="reel-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
         </div>
       </div>
     </div>
@@ -466,19 +524,16 @@
     </div>
     <div class="skills-grid">
       <div class="skill-card reveal reveal-delay-1">
-        <span class="skill-num">01</span>
         <div class="skill-name">3D Animation</div>
         <p class="skill-desc">Keyframe and motion-capture performance in Maya, grounded in solid acting fundamentals and body mechanics. Facial animation and animation supervision across realistic and stylized productions.</p>
         <div class="skill-tags"><span class="skill-tag">Maya</span><span class="skill-tag">Keyframe</span><span class="skill-tag">MoCap</span><span class="skill-tag">Facial</span><span class="skill-tag">Body Mechanics</span></div>
       </div>
       <div class="skill-card reveal reveal-delay-2">
-        <span class="skill-num">02</span>
         <div class="skill-name">Modeling &amp; Texturing</div>
         <p class="skill-desc">Organic and hard-surface modeling with clean UV mapping, plus texturing and lookdev for both realistic and stylized characters and props. Built with Maya, ZBrush, Substance Painter and Mari.</p>
         <div class="skill-tags"><span class="skill-tag">Maya</span><span class="skill-tag">ZBrush</span><span class="skill-tag">UV Mapping</span><span class="skill-tag">Substance</span><span class="skill-tag">Lookdev</span></div>
       </div>
       <div class="skill-card reveal reveal-delay-3">
-        <span class="skill-num">03</span>
         <div class="skill-name">Character FX</div>
         <p class="skill-desc">Lead CFX on cloth and clothing simulations for hero characters, with Marvelous Designer and Houdini.</p>
         <div class="skill-tags"><span class="skill-tag">Cloth Sim</span><span class="skill-tag">Houdini</span><span class="skill-tag">Marvelous</span></div>
@@ -587,31 +642,78 @@
     requestAnimationFrame(animRing);
   })();
 
-  document.querySelectorAll('a, button').forEach(el => {
+  // hover glow on interactive elements
+  document.querySelectorAll('a, button, .reel-poster').forEach(el => {
     el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
     el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
   });
 
-  // ── REEL TABS ──
+  // ── PINK STAR PARTICLES (spawn while hovering interactive elements) ──
+  const STAR_SVG = '<svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.9H21l-5.3 4.1 2 6.9L12 15.8 6.3 19.9l2-6.9L3 8.9h6.6z" fill="#FFA5AB"/></svg>';
+  let lastStar = 0;
+  document.addEventListener('mousemove', e => {
+    if (!document.body.classList.contains('cursor-hover')) return;
+    const now = performance.now();
+    if (now - lastStar < 70) return;       // throttle
+    lastStar = now;
+    const s = document.createElement('div');
+    s.className = 'cursor-star';
+    s.innerHTML = STAR_SVG;
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 14 + Math.random() * 16;
+    s.style.left = e.clientX + 'px';
+    s.style.top  = e.clientY + 'px';
+    s.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+    s.style.setProperty('--dy', Math.sin(ang) * dist + 'px');
+    s.style.width = s.style.height = (8 + Math.random() * 8) + 'px';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 700);
+  });
+
+  // ── REEL TABS + CLICK-TO-PLAY ──
   const tabs = document.querySelectorAll('.reel-tab');
   const frames = document.querySelectorAll('.reel-frame');
+
+  function resetFrame(frame){
+    // remove any loaded iframe and restore the poster so nothing plays in bg
+    const pad = frame.querySelector('.reel-pad');
+    const iframe = pad.querySelector('iframe');
+    const poster = pad.querySelector('.reel-poster');
+    if (iframe) iframe.remove();
+    if (poster) poster.style.display = 'flex';
+  }
+
+  function playPoster(poster){
+    const pad = poster.closest('.reel-pad');
+    if (pad.querySelector('iframe')) return;   // already playing
+    const iframe = document.createElement('iframe');
+    iframe.src = poster.dataset.src;
+    iframe.setAttribute('frameborder','0');
+    iframe.setAttribute('allow','autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share');
+    iframe.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
+    iframe.setAttribute('allowfullscreen','');
+    iframe.title = 'Luna Ghiso Briosso reel';
+    pad.appendChild(iframe);
+    poster.style.display = 'none';
+    document.body.classList.remove('cursor-hover');
+  }
+
+  document.querySelectorAll('.reel-poster').forEach(p => {
+    p.addEventListener('click', () => playPoster(p));
+    p.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); playPoster(p);} });
+  });
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const key = tab.dataset.reel;
       tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
       tab.classList.add('active'); tab.setAttribute('aria-selected','true');
-
       frames.forEach(f => {
-        const isTarget = f.dataset.reel === key;
-        const iframe = f.querySelector('iframe');
-        if (isTarget) {
-          // lazy-load the iframe on first activation
-          if (iframe.dataset.src && !iframe.src) iframe.src = iframe.dataset.src;
+        if (f.dataset.reel === key) {
           f.classList.add('active');
         } else {
           f.classList.remove('active');
-          // stop other reels from playing in the background
-          if (iframe.dataset.src) iframe.src = '';
+          resetFrame(f);   // stop any playing video when leaving a tab
         }
       });
     });
@@ -635,6 +737,5 @@
     }
   });
 </script>
-<script src="https://player.vimeo.com/api/player.js"></script>
 </body>
 </html>
