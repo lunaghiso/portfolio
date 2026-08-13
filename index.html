@@ -227,10 +227,16 @@
   .video-player {
     position:relative; width:100%;
     background:#000; border-radius:var(--r-lg); overflow:visible;
-    box-shadow:0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(218,98,125,0.4),
-               0 0 40px rgba(218,98,125,0.35), 0 0 80px rgba(218,98,125,0.18);
-    animation:playerGlow 4s ease-in-out infinite alternate;
+    box-shadow:0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(218,98,125,0.4);
   }
+  /* glow is a pseudo-element whose OPACITY pulses (GPU-composited, no repaint) */
+  .video-player::before {
+    content:''; position:absolute; inset:0; border-radius:var(--r-lg); z-index:-1;
+    box-shadow:0 0 52px rgba(218,98,125,0.5), 0 0 100px rgba(218,98,125,0.26);
+    animation:playerGlow 4s ease-in-out infinite alternate;
+    will-change:opacity;
+  }
+  @keyframes playerGlow { from { opacity:0.55; } to { opacity:1; } }
   .video-player > * { border-radius:var(--r-lg); }
   .player-sparkles {
     position:absolute; inset:-14px; z-index:5; pointer-events:none; border-radius:18px;
@@ -246,10 +252,6 @@
     0%   { transform:translate(-50%,-50%) scale(0) rotate(0deg); opacity:0; }
     25%  { transform:translate(-50%,-50%) scale(1) rotate(40deg); opacity:1; }
     100% { transform:translate(-50%,-50%) scale(0) rotate(120deg); opacity:0; }
-  }
-  @keyframes playerGlow {
-    from { box-shadow:0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(218,98,125,0.35), 0 0 34px rgba(218,98,125,0.3), 0 0 70px rgba(218,98,125,0.14); }
-    to   { box-shadow:0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,165,171,0.6), 0 0 52px rgba(218,98,125,0.5), 0 0 100px rgba(218,98,125,0.26); }
   }
   .reel-frame { display:none; }
   .reel-frame.active { display:block; }
@@ -769,22 +771,59 @@
   }, { threshold: 0.1 });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-  // ── STAR GUARDIAN PARALLAX STARFIELD ──
+  // ── STAR GUARDIAN PARALLAX STARFIELD (sprite-stamped, no per-frame blur) ──
   (function starfield(){
     const canvas = document.getElementById('starfield');
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ctx = canvas.getContext('2d', { alpha:true });
     let W, H, dpr;
     const layers = [
-      { count: 90, speed: 0.02, size:[0.5,1.1], parallax: 6,  hue:'#cfd6ff', alpha:[0.25,0.6] },
-      { count: 55, speed: 0.05, size:[0.9,1.8], parallax: 14, hue:'#ffd6ec', alpha:[0.35,0.8] },
-      { count: 26, speed: 0.09, size:[1.4,2.6], parallax: 26, hue:'#ffa5ab', alpha:[0.5,1.0] },
+      { count: 70, speed: 0.02, size:[0.5,1.1], parallax: 6,  hue:'#cfd6ff', alpha:[0.25,0.6] },
+      { count: 44, speed: 0.05, size:[0.9,1.8], parallax: 14, hue:'#ffd6ec', alpha:[0.35,0.8] },
+      { count: 20, speed: 0.09, size:[1.4,2.6], parallax: 26, hue:'#ffa5ab', alpha:[0.5,1.0] },
     ];
-    let stars = [];
-    let sparkles = [];
-    let mx = 0.5, my = 0.5, scrollY = 0;
+    let stars = [], sparkles = [], sprites = [], sparkSprites = {};
+    let mx = 0.5, my = 0.5, scrollY = 0, running = true;
 
     function rand(a,b){ return a + Math.random()*(b-a); }
+
+    // pre-render a soft round glow sprite once per layer (radial gradient baked in)
+    function makeStarSprite(hue, maxR){
+      const pad = maxR*4;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(pad*2);
+      const g = c.getContext('2d');
+      const cx = pad, cy = pad;
+      const grd = g.createRadialGradient(cx,cy,0, cx,cy,pad);
+      grd.addColorStop(0, hue);
+      grd.addColorStop(0.35, hue);
+      grd.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = grd;
+      g.beginPath(); g.arc(cx,cy,pad,0,Math.PI*2); g.fill();
+      return { canvas:c, pad };
+    }
+
+    // pre-render a four-point sparkle sprite once per colour
+    function makeSparkSprite(color, maxR){
+      const pad = maxR*4;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(pad*2);
+      const g = c.getContext('2d');
+      g.translate(pad,pad);
+      g.fillStyle = color;
+      g.shadowBlur = maxR*3;      // baked ONCE, not per frame
+      g.shadowColor = color;
+      g.beginPath();
+      for(let k=0;k<4;k++){
+        g.rotate(Math.PI/2);
+        g.moveTo(0,0);
+        g.quadraticCurveTo(maxR*0.28, maxR*0.28, 0, maxR*2.2);
+        g.quadraticCurveTo(-maxR*0.28, maxR*0.28, 0, 0);
+      }
+      g.fill();
+      return { canvas:c, pad };
+    }
 
     function build(){
       dpr = Math.min(window.devicePixelRatio||1, 2);
@@ -792,11 +831,16 @@
       H = canvas.height = innerHeight * dpr;
       canvas.style.width = innerWidth+'px';
       canvas.style.height = innerHeight+'px';
+      sprites = layers.map(L => makeStarSprite(L.hue, L.size[1]*dpr));
+      sparkSprites = {
+        '#FFA5AB': makeSparkSprite('#FFA5AB', 7*dpr),
+        '#DA627D': makeSparkSprite('#DA627D', 7*dpr),
+      };
       stars = [];
       layers.forEach((L,li) => {
         for(let i=0;i<L.count;i++){
           stars.push({
-            li, x:Math.random()*W, y:Math.random()*H*1.4,
+            li, x:Math.random()*W, y:Math.random()*H,
             r: rand(L.size[0],L.size[1])*dpr,
             a: rand(L.alpha[0],L.alpha[1]),
             tw: Math.random()*Math.PI*2,
@@ -806,93 +850,84 @@
       });
     }
 
-    // four-point sparkle (Star Guardian style)
-    function drawSpark(x,y,r,a,color){
-      ctx.save();
-      ctx.translate(x,y);
-      ctx.globalAlpha = a;
-      ctx.fillStyle = color;
-      ctx.shadowBlur = r*4;
-      ctx.shadowColor = color;
-      ctx.beginPath();
-      for(let k=0;k<4;k++){
-        ctx.rotate(Math.PI/2);
-        ctx.moveTo(0,0);
-        ctx.quadraticCurveTo(r*0.28, r*0.28, 0, r*2.2);
-        ctx.quadraticCurveTo(-r*0.28, r*0.28, 0, 0);
-      }
-      ctx.fill();
-      ctx.restore();
-    }
-
     function spawnSparkle(){
-      const L = layers[2];
       sparkles.push({
         x: Math.random()*W, y: Math.random()*H,
         r: rand(3,7)*dpr, life:0, max: rand(60,120),
         color: Math.random()>0.5 ? '#FFA5AB' : '#DA627D',
-        par: L.parallax
+        par: layers[2].parallax
       });
     }
 
     let frame = 0;
     function draw(){
+      if (!running) return;
       ctx.clearRect(0,0,W,H);
-      const offX = (mx-0.5);
-      const offY = (my-0.5);
+      const offX = (mx-0.5), offY = (my-0.5);
 
-      stars.forEach(s => {
-        const L = layers[s.li];
-        s.y += L.speed*dpr;              // slow drift down
+      for (let i=0;i<stars.length;i++){
+        const s = stars[i], L = layers[s.li], sp = sprites[s.li];
+        s.y += L.speed*dpr;
         s.tw += s.tws;
-        if (s.y - s.r > H) { s.y = -s.r; s.x = Math.random()*W; }
-        const px = s.x + offX*L.parallax*dpr - (scrollY*L.speed*0.6);
+        if (s.y - sp.pad > H) { s.y = -sp.pad; s.x = Math.random()*W; }
+        const px = s.x + offX*L.parallax*dpr - scrollY*L.speed*0.6*dpr;
         const py = s.y + offY*L.parallax*dpr;
         const tw = 0.6 + Math.sin(s.tw)*0.4;
+        const scale = s.r / (L.size[1]*dpr);      // sprite drawn at star size
+        const d = sp.pad*2*scale;
         ctx.globalAlpha = s.a * tw;
-        ctx.fillStyle = L.hue;
-        ctx.shadowBlur = s.r*3;
-        ctx.shadowColor = L.hue;
-        ctx.beginPath();
-        ctx.arc(px, ((py % (H*1.4))+H*1.4)%(H*1.4), s.r, 0, Math.PI*2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+        ctx.drawImage(sp.canvas, px - sp.pad*scale, py - sp.pad*scale, d, d);
+      }
+      ctx.globalAlpha = 1;
 
-      // sparkles
-      if (frame % 26 === 0 && sparkles.length < 22) spawnSparkle();
-      sparkles = sparkles.filter(sp => sp.life < sp.max);
-      sparkles.forEach(sp => {
-        sp.life++;
-        const t = sp.life/sp.max;
-        const a = Math.sin(t*Math.PI);   // fade in/out
-        const px = sp.x + offX*sp.par*dpr;
-        const py = sp.y + offY*sp.par*dpr - scrollY*0.05;
-        drawSpark(px, py, sp.r*(0.6+a*0.6), a, sp.color);
-      });
+      if (frame % 26 === 0 && sparkles.length < 18) spawnSparkle();
+      for (let i=sparkles.length-1;i>=0;i--){
+        const s = sparkles[i];
+        if (++s.life >= s.max){ sparkles.splice(i,1); continue; }
+        const t = s.life/s.max, a = Math.sin(t*Math.PI);
+        const spr = sparkSprites[s.color];
+        const px = s.x + offX*s.par*dpr;
+        const py = s.y + offY*s.par*dpr - scrollY*0.05*dpr;
+        const scale = (s.r*(0.6+a*0.6)) / (7*dpr);
+        const d = spr.pad*2*scale;
+        ctx.globalAlpha = a;
+        ctx.drawImage(spr.canvas, px - spr.pad*scale, py - spr.pad*scale, d, d);
+      }
+      ctx.globalAlpha = 1;
 
       frame++;
       requestAnimationFrame(draw);
     }
 
+    function start(){ if(!running){ running = true; requestAnimationFrame(draw); } }
+    function stop(){ running = false; }
+
     addEventListener('resize', build, {passive:true});
     addEventListener('mousemove', e => { mx = e.clientX/innerWidth; my = e.clientY/innerHeight; }, {passive:true});
     addEventListener('scroll', () => { scrollY = window.scrollY; }, {passive:true});
+    // pause when tab hidden or field scrolled well out of view
+    document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+    const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? start() : stop()), {threshold:0});
+    io.observe(canvas);
+
     build();
-    draw();
+    if (!reduce) draw(); else { // draw one static frame only
+      ctx.clearRect(0,0,W,H);
+      stars.forEach(s => { const L=layers[s.li], sp=sprites[s.li];
+        ctx.globalAlpha=s.a; ctx.drawImage(sp.canvas, s.x-sp.pad, s.y-sp.pad, sp.pad*2, sp.pad*2); });
+      running = false;
+    }
   })();
 
-  // ── VIDEO PLAYER PERIMETER SPARKLES ──
+  // ── VIDEO PLAYER PERIMETER SPARKLES (only runs while visible) ──
   const sparkleLayer = document.querySelector('.player-sparkles');
   const GLINT_SVG = '<svg viewBox="0 0 24 24"><path d="M12 0c.6 5.4 3 7.8 8.4 8.4-5.4.6-7.8 3-8.4 8.4-.6-5.4-3-7.8-8.4-8.4C9 7.8 11.4 5.4 12 0z" fill="#FFC9CF"/></svg>';
   if (sparkleLayer) {
-    setInterval(() => {
-      // only sparkle when the player is on screen
-      const r = sparkleLayer.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > window.innerHeight) return;
+    let glintTimer = null;
+    function spawnGlint(){
+      if (document.hidden) return;
       const g = document.createElement('div');
       g.className = 'glint';
-      // place along the perimeter (pick an edge)
       const edge = Math.floor(Math.random()*4);
       let x, y;
       if (edge===0){ x=Math.random()*100; y=0; }
@@ -906,18 +941,28 @@
       g.innerHTML = GLINT_SVG;
       sparkleLayer.appendChild(g);
       setTimeout(()=>g.remove(), 2200);
-    }, 260);
+    }
+    const glintIO = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting && !glintTimer) glintTimer = setInterval(spawnGlint, 300);
+      else if (!e.isIntersecting && glintTimer) { clearInterval(glintTimer); glintTimer = null; }
+    }), { threshold: 0 });
+    glintIO.observe(sparkleLayer);
   }
 
-  window.addEventListener('scroll', () => {
-    if(window.scrollY > 60){
+  let navScrolled = false;
+  addEventListener('scroll', () => {
+    const past = window.scrollY > 60;
+    if (past === navScrolled) return;      // only write when state actually changes
+    navScrolled = past;
+    if (past){
       nav.style.backdropFilter = 'blur(18px)';
       nav.style.background = 'rgba(12,13,15,0.9)';
     } else {
       nav.style.backdropFilter = 'blur(0px)';
       nav.style.background = 'linear-gradient(to bottom, rgba(12,13,15,0.96), transparent)';
     }
-  });
+  }, {passive:true});
+
 </script>
 </body>
 </html>
