@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Articles | Luna Ghiso</title>
+<meta name="description" content="Production breakdowns by Luna Ghiso: modeling, texturing, animation and CFX on the short film STIGMA.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ── SERIOUS / MUTED PALETTE ── */
+    --bg:        #0c0d0f;   /* near-black base */
+    --bg2:       #121316;   /* slightly lifted section */
+    --card:      #16181c;   /* panels */
+    --line:      rgba(255,255,255,0.08);
+    --text:      #F5E9EC;   /* near-white with a warm tint */
+    --text-dim:  #a89aa0;   /* muted mauve-grey text */
+    --accent:    #DA627D;   /* pink accent (restored) */
+    --accent-2:  #FFA5AB;   /* lighter pink for glow highlight */
+    --accent-dim:rgba(218,98,125,0.16);
+    --glow:      rgba(218,98,125,0.55);
+    --cursor:    #F5E9EC;   /* moon cursor colour */
+
+    --r-sm: 4px;
+    --r-md: 8px;
+    --r-lg: 12px;
+    --r-xl: 16px;
+    --r-pill: 999px;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  * { cursor: none !important; }
+
+  /* ── MOON CURSOR (moon inside a circle) ── */
+  #cursor-moon {
+    position: fixed; z-index: 99999; pointer-events: none;
+    width: 40px; height: 40px;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s ease, filter 0.3s ease;
+    filter: drop-shadow(0 0 6px rgba(218,98,125,0.8));
+  }
+  #cursor-moon svg { width:100%; height:100%; display:block; }
+  .cursor-hover #cursor-moon {
+    filter: drop-shadow(0 0 10px rgba(255,165,171,1)) drop-shadow(0 0 22px rgba(218,98,125,0.9));
+  }
+  #cursor-ring {
+    position: fixed; z-index: 99998; pointer-events: none;
+    width: 56px; height: 56px;
+    border: 1px solid rgba(218,98,125,0.4);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease, opacity 0.3s, border-color 0.3s;
+    opacity: 0.6;
+  }
+  .cursor-hover #cursor-ring { width: 76px; height: 76px; border-color: var(--accent-2); opacity:0.95; box-shadow:0 0 18px rgba(218,98,125,0.5); }
+
+  /* pink star particles that spawn on hover */
+  .cursor-star {
+    position: fixed; z-index: 99997; pointer-events: none;
+    width: 12px; height: 12px;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+    animation: starPop 0.7s ease-out forwards;
+  }
+  .cursor-star svg { width:100%; height:100%; display:block; filter: drop-shadow(0 0 4px rgba(255,165,171,0.9)); }
+  @keyframes starPop {
+    0%   { transform: translate(-50%,-50%) scale(0) rotate(0deg); opacity:0; }
+    30%  { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(60deg); opacity:1; }
+    100% { transform: translate(calc(-50% + var(--dx)*1.8), calc(-50% + var(--dy)*1.8 + 14px)) scale(0.2) rotate(160deg); opacity:0; }
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: radial-gradient(ellipse 120% 80% at 50% -10%, #1a1020 0%, #0e0a12 45%, var(--bg) 100%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Star Guardian parallax field */
+  #starfield {
+    position:fixed; inset:0; z-index:0; pointer-events:none; display:block;
+  }
+
+  /* subtle grain */
+  body::before {
+    content:''; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    opacity:0.25; mix-blend-mode:overlay;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:1000;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 48px;
+    background: linear-gradient(to bottom, rgba(12,13,15,0.96), transparent);
+    animation: navIn 1s ease 0.2s both;
+  }
+  @keyframes navIn { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+
+  .nav-logo {
+    font-family:'Montserrat',sans-serif; font-weight:900; font-size:15px;
+    letter-spacing:0.14em; color:var(--text); text-decoration:none; text-transform:uppercase;
+    display:flex; align-items:center; gap:11px;
+  }
+  .nav-logo .moon-icon { width:16px; height:16px; display:block; }
+  .nav-logo .moon-icon svg { width:100%; height:100%; display:block; }
+
+  .nav-links { display:flex; gap:32px; align-items:center; }
+  .nav-links a {
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em;
+    color:var(--text-dim); text-decoration:none; text-transform:uppercase;
+    transition:color 0.2s; position:relative;
+  }
+  .nav-links a::after {
+    content:''; position:absolute; bottom:-3px; left:0; width:0; height:1px;
+    background:var(--accent); transition:width 0.3s ease;
+  }
+  .nav-links a:hover { color:var(--text); }
+  .nav-links a:hover::after { width:100%; }
+  .nav-contact {
+    background:var(--accent) !important; color:#fff !important;
+    padding:9px 22px; border-radius:var(--r-pill) !important;
+    letter-spacing:0.1em; text-transform:uppercase;
+    transition:background 0.2s, opacity 0.2s !important;
+  }
+  .nav-contact:hover { opacity:0.88; color:#fff !important; }
+  .nav-contact::after { display:none !important; }
+
+  
+  .nav-links a.active { color:var(--text); }
+  .nav-links a.active::after { width:100%; }
+
+  /* ── PAGE HEADER ── */
+  .page-head { position:relative; z-index:1; max-width:1240px; margin:0 auto; padding:150px 52px 40px; }
+  .page-title {
+    font-family:'Montserrat',sans-serif; font-weight:900; font-size:clamp(40px,7vw,84px);
+    line-height:1; text-transform:uppercase; letter-spacing:-0.01em;
+    background:linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 50%, var(--text) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    filter:drop-shadow(0 0 22px rgba(218,98,125,0.55));
+  }
+  .page-intro { margin-top:22px; max-width:560px; font-size:18px; line-height:1.7; color:var(--text-dim); }
+
+  /* ── PROJECT BLOCK ── */
+  .project-block { scroll-margin-top:70px; position:relative; z-index:1; max-width:1240px; margin:0 auto; padding:0 52px; }
+  .project-banner {
+    display:grid; grid-template-columns:1.1fr 1fr; gap:40px; align-items:center;
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:40px 0;
+  }
+  .project-banner img { width:100%; border-radius:var(--r-lg); display:block; box-shadow:0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(218,98,125,0.3); }
+  .project-name { font-family:'Montserrat',sans-serif; font-weight:900; font-size:clamp(30px,4vw,48px); text-transform:uppercase; letter-spacing:0.02em; }
+  .project-desc { margin-top:14px; font-size:16px; line-height:1.75; color:var(--text-dim); max-width:52ch; }
+  .project-roles { margin-top:18px; display:flex; flex-wrap:wrap; gap:8px; list-style:none; }
+  .project-roles li { font-size:12px; color:var(--text); border:1px solid rgba(218,98,125,0.45); border-radius:var(--r-pill); padding:5px 12px; }
+
+  /* ── LAYOUT ── */
+  .articles-wrap { position:relative; z-index:1; max-width:1240px; margin:0 auto; padding:48px 52px 100px; display:grid; grid-template-columns:260px minmax(0,1fr); gap:64px; }
+
+  /* sidebar */
+  .sidebar { position:sticky; top:96px; align-self:start; max-height:calc(100vh - 120px); overflow-y:auto; padding-right:6px; }
+  .side-project { font-family:'Montserrat',sans-serif; font-weight:900; font-size:14px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text); padding-bottom:14px; border-bottom:1px solid var(--line); margin-bottom:10px; }
+  .side-list { list-style:none; }
+  .side-item { border-left:2px solid var(--line); transition:border-color .25s; }
+  .side-item.active { border-left-color:var(--accent); }
+  .side-link { display:block; padding:12px 0 12px 16px; text-decoration:none; }
+  .side-disc { display:block; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent); margin-bottom:3px; }
+  .side-title { display:block; font-size:14px; line-height:1.4; color:var(--text-dim); transition:color .2s; }
+  .side-link:hover .side-title, .side-item.active .side-title { color:var(--text); }
+  .side-secs { list-style:none; padding:0 0 10px 16px; display:none; }
+  .side-item.active .side-secs { display:block; }
+  .side-secs a { display:block; font-size:13px; line-height:1.4; color:var(--text-dim); text-decoration:none; padding:5px 0 5px 12px; border-left:1px solid transparent; margin-left:-1px; transition:color .2s, border-color .2s; }
+  .side-secs a:hover { color:var(--text); }
+  .side-secs a.active { color:var(--accent-2); border-left-color:var(--accent-2); }
+
+  /* article */
+  .article { scroll-margin-top:96px; }
+  .article-head { margin-bottom:36px; }
+  .article-tag { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--accent); margin-bottom:12px; }
+  .article-title { font-family:'Montserrat',sans-serif; font-weight:900; font-size:clamp(28px,4vw,46px); line-height:1.08; text-transform:uppercase; letter-spacing:-0.01em; color:var(--text); max-width:22ch; }
+  .article-lead { margin-top:20px; font-size:19px; line-height:1.7; color:var(--text); max-width:64ch; }
+  .tool-tags { margin-top:20px; display:flex; flex-wrap:wrap; gap:8px; list-style:none; }
+  .tool-tags li { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); border:1px solid var(--line); border-radius:var(--r-pill); padding:4px 11px; }
+
+  .article-body { max-width:860px; }
+  .article-body h2 { scroll-margin-top:96px; font-family:'Montserrat',sans-serif; font-weight:700; font-size:clamp(21px,2.4vw,27px); color:var(--accent-2); margin:56px 0 16px; letter-spacing:0.005em; }
+  .article-body h3 { font-family:'Montserrat',sans-serif; font-weight:700; font-size:18px; color:var(--text); margin:36px 0 12px; }
+  .article-body h4 { font-family:'Inter',sans-serif; font-weight:500; font-size:16px; color:var(--accent); margin:30px 0 10px; }
+  .article-body p { font-size:16.5px; line-height:1.8; color:#ddd0d5; max-width:68ch; margin-bottom:16px; }
+  .article-body p.credit { font-size:13px; font-style:italic; color:var(--text-dim); }
+  figure { margin:22px 0 28px; }
+  figure .zoom { display:block; width:100%; padding:0; border:0; background:none; border-radius:var(--r-md); overflow:hidden; box-shadow:0 0 0 1px var(--line); transition:box-shadow .25s; }
+  figure .zoom:hover, figure .zoom:focus-visible { box-shadow:0 0 0 1px var(--accent), 0 0 26px rgba(218,98,125,0.35); }
+  figure img { display:block; width:100%; height:auto; }
+  figcaption { margin-top:9px; font-size:13px; line-height:1.5; color:var(--text-dim); }
+  .article-divider { border:0; border-top:1px solid var(--line); margin:90px 0; }
+  .back-top { display:inline-block; margin-top:28px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:2px; }
+  .back-top:hover { color:var(--accent); border-color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent-2); outline-offset:3px; }
+
+  /* lightbox */
+  .lightbox { position:fixed; inset:0; z-index:5000; background:rgba(8,6,10,0.94); display:none; align-items:center; justify-content:center; padding:40px; }
+  .lightbox.open { display:flex; }
+  .lightbox img { max-width:100%; max-height:84vh; border-radius:var(--r-md); box-shadow:0 0 0 1px rgba(218,98,125,0.4); }
+  .lightbox p { position:absolute; bottom:24px; left:0; right:0; text-align:center; font-size:14px; color:var(--text-dim); padding:0 24px; }
+  .lightbox-close { position:absolute; top:22px; right:26px; background:none; border:1px solid var(--line); color:var(--text); border-radius:var(--r-pill); padding:8px 16px; font-family:'JetBrains Mono',monospace; font-size:11px; }
+  .lightbox-close:hover { border-color:var(--accent); color:var(--accent); }
+
+  footer { background:rgba(12,13,15,0.6); padding:26px 52px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); position:relative; z-index:2; }
+  .footer-logo { font-family:'Montserrat',sans-serif; font-weight:900; font-size:13px; letter-spacing:0.14em; color:var(--text); text-transform:uppercase; }
+  .footer-links { display:flex; gap:22px; }
+  .footer-links a { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; color:var(--text-dim); text-decoration:none; text-transform:uppercase; transition:color 0.2s; }
+  .footer-links a:hover { color:var(--accent); }
+  .footer-right { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-dim); }
+
+  @media (max-width:960px){
+    .articles-wrap { grid-template-columns:1fr; gap:0; padding-top:24px; }
+    .sidebar { position:sticky; top:62px; z-index:5; max-height:none; overflow:visible; padding:10px 0; margin:0 -22px 30px; padding-left:22px; background:rgba(12,13,15,0.92); backdrop-filter:blur(14px); border-bottom:1px solid var(--line); }
+    .side-project { display:none; }
+    .side-list { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+    .side-item { border-left:0; flex:0 0 auto; }
+    .side-link { padding:8px 14px; border:1px solid var(--line); border-radius:var(--r-pill); }
+    .side-item.active .side-link { border-color:var(--accent); }
+    .side-disc { margin:0; }
+    .side-title, .side-secs, .side-item.active .side-secs { display:none; }
+    .project-banner { grid-template-columns:1fr; gap:24px; }
+  }
+  @media (max-width:768px){
+    nav { padding:16px 22px; }
+    .nav-links { gap:18px; }
+    .page-head { padding:120px 22px 30px; }
+    .project-block { padding:0 22px; }
+    .articles-wrap { padding:20px 22px 80px; }
+    .article-lead { font-size:17px; }
+    footer { flex-direction:column; gap:14px; text-align:center; padding:26px 22px; }
+    .footer-links { flex-wrap:wrap; justify-content:center; }
+  }
+  @media (hover:none){ * { cursor:auto !important; } #cursor-moon, #cursor-ring { display:none; } }
+  @media (prefers-reduced-motion:reduce){ html { scroll-behavior:auto; } }
+</style>
+</head>
+<body id="top">
+
+<canvas id="starfield" aria-hidden="true"></canvas>
+
+<div id="cursor-moon">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 14.5A8.5 8.5 0 1 1 10.2 4a6.7 6.7 0 0 0 9.8 10.5z" fill="#F5E9EC"/>
+  </svg>
+</div>
+<div id="cursor-ring"></div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <span class="moon-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 14.5A8.5 8.5 0 1 1 10.2 4a6.7 6.7 0 0 0 9.8 10.5z" fill="#ECECEA"/>
+      </svg>
+    </span>
+    Luna Ghiso
+  </a>
+  <div class="nav-links">
+    <a href="index.html#projects">Projects</a>
+    <a href="articles.html" class="active" aria-current="page">Articles</a>
+    <a href="cv.html">CV</a>
+    <a href="index.html#contact" class="nav-contact">Contact</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <h1 class="page-title">Articles</h1>
+  <p class="page-intro">Production breakdowns organized by project: how the work was approached, the decisions behind it and the results.</p>
+</header>
+
+<section class="project-block" id="stigma" aria-labelledby="stigma-name">
+  <div class="project-banner">
+    <img src="images/stigma/m_final_light.jpg" alt="Conchi in a final render from STIGMA">
+    <div>
+      <h2 class="project-name" id="stigma-name">The Stigma Shortfilm</h2>
+      <p class="project-desc">Realistic PBR short film set on Arawa, an alien planet devastated by drought. Two years of production with a team of eleven and more than forty collaborators.</p>
+      <ul class="project-roles">
+        <li>Lead Animator</li><li>Lead CFX Artist</li><li>Character Modeling</li><li>Texturing</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="articles-wrap">
+  <aside class="sidebar" aria-label="Articles">
+    <p class="side-project">The Stigma Shortfilm</p>
+    <ul class="side-list">
+        <li class="side-item" data-article="stigma-modeling">
+          <a href="#stigma-modeling" class="side-link"><span class="side-disc">Modeling</span><span class="side-title">3D Modeling &amp; Displacement: Conchi</span></a>
+          <ol class="side-secs"><li><a href="#stigma-modeling--meet-conchi-gathering-references" data-sec="stigma-modeling--meet-conchi-gathering-references">Meet Conchi: Gathering References</a></li><li><a href="#stigma-modeling--sculpting-conchi-in-zbrush" data-sec="stigma-modeling--sculpting-conchi-in-zbrush">Sculpting Conchi in ZBrush</a></li><li><a href="#stigma-modeling--retopology-in-maya" data-sec="stigma-modeling--retopology-in-maya">Retopology in Maya</a></li><li><a href="#stigma-modeling--back-to-zbrush-volumes-and-displacement" data-sec="stigma-modeling--back-to-zbrush-volumes-and-displacement">Back to ZBrush: Volumes and Displacement</a></li><li><a href="#stigma-modeling--one-set-of-teeth-for-every-character" data-sec="stigma-modeling--one-set-of-teeth-for-every-character">One Set of Teeth for Every Character</a></li></ol>
+        </li>
+        <li class="side-item" data-article="stigma-texturing">
+          <a href="#stigma-texturing" class="side-link"><span class="side-disc">Texturing</span><span class="side-title">Character Texturing: Enfermo 001 &amp; Conchi's Outfit</span></a>
+          <ol class="side-secs"><li><a href="#stigma-texturing--sculpting-sickness-displacement-for-enfermo-001" data-sec="stigma-texturing--sculpting-sickness-displacement-for-enfermo-001">Sculpting Sickness: Displacement for Enfermo 001</a></li><li><a href="#stigma-texturing--texturing-in-mari" data-sec="stigma-texturing--texturing-in-mari">Texturing in Mari</a></li><li><a href="#stigma-texturing--lookdev-in-houdini-eyes-wetness-and-sss" data-sec="stigma-texturing--lookdev-in-houdini-eyes-wetness-and-sss">Lookdev in Houdini: Eyes, Wetness and SSS</a></li><li><a href="#stigma-texturing--texturing-conchi-s-sacrificial-outfit-in-substance-painter" data-sec="stigma-texturing--texturing-conchi-s-sacrificial-outfit-in-substance-painter">Texturing Conchi's Sacrificial Outfit in Substance Painter</a></li></ol>
+        </li>
+        <li class="side-item" data-article="stigma-animation">
+          <a href="#stigma-animation" class="side-link"><span class="side-disc">Animation</span><span class="side-title">Animation: Keyframe &amp; Mocap</span></a>
+          <ol class="side-secs"><li><a href="#stigma-animation--organizing-the-animation-department" data-sec="stigma-animation--organizing-the-animation-department">Organizing the Animation Department</a></li><li><a href="#stigma-animation--references" data-sec="stigma-animation--references">References</a></li><li><a href="#stigma-animation--animation-work" data-sec="stigma-animation--animation-work">Animation Work</a></li></ol>
+        </li>
+        <li class="side-item" data-article="stigma-cfx">
+          <a href="#stigma-cfx" class="side-link"><span class="side-disc">CFX</span><span class="side-title">CFX: Cloth Simulation Pipeline</span></a>
+          <ol class="side-secs"><li><a href="#stigma-cfx--cloth-modeling-for-simulation" data-sec="stigma-cfx--cloth-modeling-for-simulation">Cloth Modeling for Simulation</a></li><li><a href="#stigma-cfx--simulation-in-houdini" data-sec="stigma-cfx--simulation-in-houdini">Simulation in Houdini</a></li></ol>
+        </li>
+    </ul>
+  </aside>
+
+  <main class="article-area">
+
+    <article id="stigma-modeling" class="article">
+      <header class="article-head">
+        <p class="article-tag">STIGMA / Modeling</p>
+        <h2 class="article-title">3D Modeling &amp; Displacement: Conchi</h2>
+        <p class="article-lead">STIGMA is a realistic PBR short film set on Arawa, an alien planet devastated by drought, developed over two years by a team of eleven with more than forty collaborators. The story is seen through the eyes of Conchi, a young acolyte who assists in the gestation rituals and witnesses the sacrifice taking place in the short film. In this article I'll showcase the work I did for the short film.</p>
+        <ul class="tool-tags" aria-label="Tools"><li>ZBrush</li><li>Maya</li><li>Houdini</li></ul>
+      </header>
+      <div class="article-body">
+<h2 id="stigma-modeling--meet-conchi-gathering-references">Meet Conchi: Gathering References</h2>
+<p>Conchi is a preteen, around eight or nine in human terms, living through the famine that ravages her planet. The reference board was built around her turnarounds, focusing on three things: emaciated, bony bodies, childlike facial features and skin imperfections.</p>
+<p>Coming from a more cartoon-oriented background, Conchi turned out to be the most natural fit in the cast: expressive, big-eyed, and the character that made the project click on a personal level.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Conchi concepts by Naiara Tamayo and Julia Aguiló."><img src="images/stigma/m_concepts.jpg" alt="Conchi concepts by Naiara Tamayo and Julia Aguiló." loading="lazy"></button><figcaption>Conchi concepts by Naiara Tamayo and Julia Aguiló.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Reference board for Conchi."><img src="images/stigma/m_refs.jpg" alt="Reference board for Conchi." loading="lazy"></button><figcaption>Reference board for Conchi.</figcaption></figure>
+<h2 id="stigma-modeling--sculpting-conchi-in-zbrush">Sculpting Conchi in ZBrush</h2>
+<p>The sculpt was done in ZBrush with one clear goal: Conchi had to convey curiosity and tenderness through her eyes while staying anatomically consistent with her species. Feedback from the team and from Character Modeling supervisor Albert Vivó shaped the final read of her face.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Conchi's sculpt in ZBrush, face close-ups."><img src="images/stigma/m_face.jpg" alt="Conchi's sculpt in ZBrush, face close-ups." loading="lazy"></button><figcaption>Conchi's sculpt in ZBrush, face close-ups.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Full body sculpt."><img src="images/stigma/m_body.jpg" alt="Full body sculpt." loading="lazy"></button><figcaption>Full body sculpt.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Hands and feet close-ups."><img src="images/stigma/m_hands.jpg" alt="Hands and feet close-ups." loading="lazy"></button><figcaption>Hands and feet close-ups.</figcaption></figure>
+<h2 id="stigma-modeling--retopology-in-maya">Retopology in Maya</h2>
+<p>In STIGMA, every character shares the same topological base. This meant UVs, textures and displacement could travel from one character to the next instead of being rebuilt each time, which saved a lot of production time.</p>
+<h3>Reusing topology across the cast</h3>
+<p>The Mother, already finished, was used as the base. Her retopology was projected onto Conchi with Houdini's retopotransfer node, then refined in Maya with smooths and sculpting tools. The edge loops were also used to slightly enlarge her eyes and sharpen key areas.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Conchi's retopology in Maya."><img src="images/stigma/m_retopo.jpg" alt="Conchi's retopology in Maya." loading="lazy"></button><figcaption>Conchi's retopology in Maya.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image"><img src="images/stigma/m_retopo2.jpg" alt="" loading="lazy"></button></figure>
+<h3>Opening the mouth</h3>
+<p>To work on the inner membrane of the mouth, a temporary jaw setup was added using an existing skinning, so the mouth could be opened, adjusted and closed again without breaking the base mesh.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Conchi with her mouth open to work on the membrane. Skinning by Marc Tragant."><img src="images/stigma/m_mouth.jpg" alt="Conchi with her mouth open to work on the membrane. Skinning by Marc Tragant." loading="lazy"></button><figcaption>Conchi with her mouth open to work on the membrane. Skinning by Marc Tragant.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image"><img src="images/stigma/m_mouth2.jpg" alt="" loading="lazy"></button></figure>
+<h3>Matching polycounts for clean UV transfers</h3>
+<p>The shared-topology approach only works if every mesh has exactly the same polycount, so this was checked at every step. Three UV variants were transferred (8, 16 and 20 UDIMs) to adapt texture resolution to how close the character is to camera in each shot.</p>
+<h2 id="stigma-modeling--back-to-zbrush-volumes-and-displacement">Back to ZBrush: Volumes and Displacement</h2>
+<h3>Primary volumes</h3>
+<p>Once the retopology was ready, the model went back to ZBrush to recover what had been lost along the way: bone structure, tear ducts, wrinkles, hands, feet and musculature.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Primary volumes in ZBrush."><img src="images/stigma/m_prim1.jpg" alt="Primary volumes in ZBrush." loading="lazy"></button><figcaption>Primary volumes in ZBrush.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image"><img src="images/stigma/m_prim2.jpg" alt="" loading="lazy"></button></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image"><img src="images/stigma/m_prim3.jpg" alt="" loading="lazy"></button></figure>
+<h3>Layered displacement: mixing reptile and human skin</h3>
+<p>Starting from the Mother's displacement, the skin detail was built in non-destructive layers, blending reptile and human skin in different proportions by zone. The forehead and cheeks, the areas most exposed to the desert sun where Conchi spends her days collecting shells, got dry, flaky scales made with custom brushes. The nose scales and lips received their own detail passes.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Secondary and tertiary volumes in ZBrush."><img src="images/stigma/m_disp1.jpg" alt="Secondary and tertiary volumes in ZBrush." loading="lazy"></button><figcaption>Secondary and tertiary volumes in ZBrush.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Close-up of the nose scales and skin detail."><img src="images/stigma/m_disp2.jpg" alt="Close-up of the nose scales and skin detail." loading="lazy"></button><figcaption>Close-up of the nose scales and skin detail.</figcaption></figure>
+<h3>Final result</h3>
+<p>With the displacement maps exported, Conchi moved on to texturing and lighting.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Final Conchi with retopology. Textures by Paula Francín."><img src="images/stigma/m_final.jpg" alt="Final Conchi with retopology. Textures by Paula Francín." loading="lazy"></button><figcaption>Final Conchi with retopology. Textures by Paula Francín.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Final render of Conchi. Lighting by María González."><img src="images/stigma/m_final_light.jpg" alt="Final render of Conchi. Lighting by María González." loading="lazy"></button><figcaption>Final render of Conchi. Lighting by María González.</figcaption></figure>
+<h2 id="stigma-modeling--one-set-of-teeth-for-every-character">One Set of Teeth for Every Character</h2>
+<p>A single set of teeth was designed for the whole cast. After looking at human, cat, amphibian and primate references, the final choice was human teeth with exaggerated canines, close to a fruit-eating primate: alien enough to fit the species, human enough not to feel unsettling. Dirt and wear were left for texturing, so they could be applied per character.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Teeth references."><img src="images/stigma/m_teeth_refs.jpg" alt="Teeth references." loading="lazy"></button><figcaption>Teeth references.</figcaption></figure>
+<p>The teeth and gums were sculpted in ZBrush and then retopologized and unwrapped in Maya.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Teeth sculpt in ZBrush."><img src="images/stigma/m_teeth_sculpt.jpg" alt="Teeth sculpt in ZBrush." loading="lazy"></button><figcaption>Teeth sculpt in ZBrush.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Teeth retopology and UVs in Maya."><img src="images/stigma/m_teeth_retopo.jpg" alt="Teeth retopology and UVs in Maya." loading="lazy"></button><figcaption>Teeth retopology and UVs in Maya.</figcaption></figure>
+      </div>
+      <a href="#top" class="back-top">Back to top</a>
+    </article>
+    <hr class="article-divider">
+
+    <article id="stigma-texturing" class="article">
+      <header class="article-head">
+        <p class="article-tag">STIGMA / Texturing</p>
+        <h2 class="article-title">Character Texturing: Enfermo 001 &amp; Conchi's Outfit</h2>
+        <p class="article-lead">Two assets were textured for STIGMA: Enfermo 001, one of the sick villagers waiting to be cured by the sacrifice, and Conchi's outfit for sequence 080, the sacrifice itself. Both were taken from displacement through to lookdev.</p>
+        <ul class="tool-tags" aria-label="Tools"><li>ZBrush</li><li>Mari</li><li>Substance Painter</li><li>Houdini</li><li>Karma</li></ul>
+      </header>
+      <div class="article-body">
+<h2 id="stigma-texturing--sculpting-sickness-displacement-for-enfermo-001">Sculpting Sickness: Displacement for Enfermo 001</h2>
+<p>Enfermo 001 had to look wasted away, a reflection of the physical toll the planet's crisis takes on its people. References of burned and scarred skin, prominent veins and infections guided the process.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: References for Enfermo 001."><img src="images/stigma/x_refs.jpg" alt="References for Enfermo 001." loading="lazy"></button><figcaption>References for Enfermo 001.</figcaption></figure>
+<p>Using the same layered ZBrush workflow as Conchi, muscles, cavities and wrinkles were defined first, followed by pores, skin marks, scales, scars and veins.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Secondary volumes of Enfermo 001. Base model and retopology by Víctor Molini."><img src="images/stigma/x_vol.jpg" alt="Secondary volumes of Enfermo 001. Base model and retopology by Víctor Molini." loading="lazy"></button><figcaption>Secondary volumes of Enfermo 001. Base model and retopology by Víctor Molini.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: The scar."><img src="images/stigma/x_scar.jpg" alt="The scar." loading="lazy"></button><figcaption>The scar.</figcaption></figure>
+<h2 id="stigma-texturing--texturing-in-mari">Texturing in Mari</h2>
+<h3>Starting from a shared base</h3>
+<p>As with most of the cast, texturing started from the Mother's base textures to keep every character cohesive. The ZBrush displacement maps were then used as masks for pores, imperfections and volumes, and the skin was pushed towards a sick, exhausted look with blotches and dark circles.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Texturing Enfermo 001 in Mari."><img src="images/stigma/x_mari.jpg" alt="Texturing Enfermo 001 in Mari." loading="lazy"></button><figcaption>Texturing Enfermo 001 in Mari.</figcaption></figure>
+<h3>One model, two characters</h3>
+<p>The same model was reused for a second character, the masked dancer. The skin was textured without the scar first, so the scar could be layered on top for Enfermo 001 and left out for the dancer, keeping the reuse invisible on screen.</p>
+<h3>Isolating a scar mask</h3>
+<p>The baked scar maps also picked up unrelated areas of the body, and a simple Levels adjustment wasn't enough to separate them. The solution was to invert the occlusion map and multiply it with a painted layer, ending up with a clean mask where only the scar remained.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Scar bake maps."><img src="images/stigma/x_bake.jpg" alt="Scar bake maps." loading="lazy"></button><figcaption>Scar bake maps.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Node setup for the scar mask."><img src="images/stigma/x_node.jpg" alt="Node setup for the scar mask." loading="lazy"></button><figcaption>Node setup for the scar mask.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Resulting scar mask."><img src="images/stigma/x_mask.jpg" alt="Resulting scar mask." loading="lazy"></button><figcaption>Resulting scar mask.</figcaption></figure>
+<h3>Painting a bruise</h3>
+<p>The scar was painted with yellow, violet and red tones based on real bruising. Colors were deliberately oversaturated, since Houdini's Karma tended to flatten them at render time.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Scar texturing."><img src="images/stigma/x_bruise.jpg" alt="Scar texturing." loading="lazy"></button><figcaption>Scar texturing.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Render after color and saturation corrections."><img src="images/stigma/x_render1.jpg" alt="Render after color and saturation corrections." loading="lazy"></button><figcaption>Render after color and saturation corrections.</figcaption></figure>
+<h2 id="stigma-texturing--lookdev-in-houdini-eyes-wetness-and-sss">Lookdev in Houdini: Eyes, Wetness and SSS</h2>
+<p>The lookdev scene was set up in Houdini, including eyes and wetness. The Sabia's eye material was reused to give Enfermo 001 a sick, almost blind look, and the SSS was adjusted before publishing the final USD to the Asset Catalog.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Lookdev scene in Houdini."><img src="images/stigma/x_houdini.jpg" alt="Lookdev scene in Houdini." loading="lazy"></button><figcaption>Lookdev scene in Houdini.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Render with corrected SSS."><img src="images/stigma/x_sss.jpg" alt="Render with corrected SSS." loading="lazy"></button><figcaption>Render with corrected SSS.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Final render of Enfermo 001."><img src="images/stigma/x_final.jpg" alt="Final render of Enfermo 001." loading="lazy"></button><figcaption>Final render of Enfermo 001.</figcaption></figure>
+<h2 id="stigma-texturing--texturing-conchi-s-sacrificial-outfit-in-substance-painter">Texturing Conchi's Sacrificial Outfit in Substance Painter</h2>
+<h3>Concept and symbolism</h3>
+<p>The outfit draws on Egyptian textiles: gold, shine, vivid colors and, above all, linen, considered the purest fabric and required in temples. The pants, by contrast, are silk, an animal fabric seen as impure in ritual contexts.</p>
+<p>That duality mirrors Conchi's arc: she follows the Sabia but ends up identifying with the Mother. The palette reflects it too, combining the Mother's blue, innocent and virginal, with the Sabia's earthy, intense orange.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Outfit concept by Celia Ribas."><img src="images/stigma/x_outfit_concept.jpg" alt="Outfit concept by Celia Ribas." loading="lazy"></button><figcaption>Outfit concept by Celia Ribas.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Outfit references."><img src="images/stigma/x_outfit_refs.jpg" alt="Outfit references." loading="lazy"></button><figcaption>Outfit references.</figcaption></figure>
+<h3>Texturing process</h3>
+<p>The outfit was textured in Substance Painter, with tears and dirt added at the end, and published as USD once approved.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Texturing the outfit in Substance Painter."><img src="images/stigma/x_outfit_tex.jpg" alt="Texturing the outfit in Substance Painter." loading="lazy"></button><figcaption>Texturing the outfit in Substance Painter.</figcaption></figure>
+<p>The veil visible in the process images didn't make it to the final outfit: the shape of Conchi's ears created a bulge underneath it that never quite worked.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Final renders of Conchi's outfit."><img src="images/stigma/x_outfit_render.jpg" alt="Final renders of Conchi's outfit." loading="lazy"></button><figcaption>Final renders of Conchi's outfit.</figcaption></figure>
+      </div>
+      <a href="#top" class="back-top">Back to top</a>
+    </article>
+    <hr class="article-divider">
+
+    <article id="stigma-animation" class="article">
+      <header class="article-head">
+        <p class="article-tag">STIGMA / Animation</p>
+        <h2 class="article-title">Animation: Keyframe &amp; Mocap</h2>
+        <p class="article-lead">Animation was the biggest contribution to STIGMA. As co-Lead Animator alongside Paula Hernández, the role covered both running the department and animating around twenty shots across keyframe, motion capture and fixes.</p>
+        <ul class="tool-tags" aria-label="Tools"><li>Maya</li><li>Vicon Shogun</li><li>Human IK</li><li>Studio Library</li><li>SyncSketch</li></ul>
+      </header>
+      <div class="article-body">
+<h2 id="stigma-animation--organizing-the-animation-department">Organizing the Animation Department</h2>
+<h3>Leading a 100-shot department</h3>
+<p>With a hundred shots to deliver and a team that relied heavily on external collaborators, planning came first. The department kicked off with a meeting with animation supervisor Leonardo Pereira, supported by character sheets describing each character's personality and anatomy, so everyone started from the same understanding.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Character sheets."><img src="images/stigma/a_sheets.jpg" alt="Character sheets." loading="lazy"></button><figcaption>Character sheets.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image"><img src="images/stigma/a_sheets2.jpg" alt="" loading="lazy"></button></figure>
+<h3>An animation tracker that sets priorities</h3>
+<p>The existing layout tracker was expanded into an animation scouting with assignments, status, acting notes and references. Priority was set by dependency: the more departments (like CFX or FX) waiting on a shot, the higher it ranked. Shots were then split between the core team and collaborators from third and fourth year, assigned according to each animator's strengths.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Animation scouting."><img src="images/stigma/a_tracker.jpg" alt="Animation scouting." loading="lazy"></button><figcaption>Animation scouting.</figcaption></figure>
+<h3>Onboarding collaborators</h3>
+<p>A bilingual pipeline document (Spanish and English) set the rules for everyone from day one. A project-wide SyncSketch centralized reviews for all departments, and Discord was organized with one thread per shot, tagged To Do, WIP or Approved, so feedback and status could be tracked at a glance.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Animation pipeline document for collaborators."><img src="images/stigma/a_pipedoc.jpg" alt="Animation pipeline document for collaborators." loading="lazy"></button><figcaption>Animation pipeline document for collaborators.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: The project's SyncSketch."><img src="images/stigma/a_sync.jpg" alt="The project's SyncSketch." loading="lazy"></button><figcaption>The project's SyncSketch.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Communication threads on Discord."><img src="images/stigma/a_discord.jpg" alt="Communication threads on Discord." loading="lazy"></button><figcaption>Communication threads on Discord.</figcaption></figure>
+<h3>The "Happy Meal" shot folder</h3>
+<p>Each shot was delivered as a self-contained package, following a method taught by the supervisor: a ready-to-animate .ma file, notes, the shot reference, and layout videos of the previous, current and next shot for context. Any collaborator could open the folder and start animating right away.</p>
+<h2 id="stigma-animation--references">References</h2>
+<h3>Walking on tiptoes</h3>
+<p>STIGMA's characters walk on their tiptoes, so the walk cycle research drew from herons, people walking in heels and the Kaminoans from Star Wars. Annotated references became the starting point for the walk cycle explorations, done with the first body mechanics rig and aiming for a tired, worn-out feel. A first facial test was also used to check textures and deformations.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: First animation references."><img src="images/stigma/a_walkref.jpg" alt="First animation references." loading="lazy"></button><figcaption>First animation references.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Walk cycle explorations."><img src="images/stigma/a_walkexp.jpg" alt="Walk cycle explorations." loading="lazy"></button><figcaption>Walk cycle explorations.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: First facial test."><img src="images/stigma/a_facial.jpg" alt="First facial test." loading="lazy"></button><figcaption>First facial test.</figcaption></figure>
+<h3>Directing live-action reference</h3>
+<p>Reference for the Mother, the Sabia, Conchi and the ritual dances was directed and recorded with actors and dancers, with the help of Sergi Vizcaíno, Víctor Molini, Paula Hernández and Julia Aguiló.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Reference with Marina Blonce as Conchi."><img src="images/stigma/a_ref_conchi.jpg" alt="Reference with Marina Blonce as Conchi." loading="lazy"></button><figcaption>Reference with Marina Blonce as Conchi.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Reference with Raquel García as the Mother."><img src="images/stigma/a_ref_madre.jpg" alt="Reference with Raquel García as the Mother." loading="lazy"></button><figcaption>Reference with Raquel García as the Mother.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Reference for the Sabia."><img src="images/stigma/a_ref_sabia.jpg" alt="Reference for the Sabia." loading="lazy"></button><figcaption>Reference for the Sabia.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Dance reference with Alejandro Mendoza, Pol Guinot, Victor Vásquez, Marta Requejo and Jesús Rodríguez."><img src="images/stigma/a_ref_dance.jpg" alt="Dance reference with Alejandro Mendoza, Pol Guinot, Victor Vásquez, Marta Requejo and Jesús Rodríguez." loading="lazy"></button><figcaption>Dance reference with Alejandro Mendoza, Pol Guinot, Victor Vásquez, Marta Requejo and Jesús Rodríguez.</figcaption></figure>
+<h2 id="stigma-animation--animation-work">Animation Work</h2>
+<h3>Part 1: Keyframe</h3>
+<h4>Workflow</h4>
+<p>Keyframe shots followed a structured process: Golden Poses first, then stepped blocking with a key every four frames following reference, and finally spline to refine curves and add subtle motion. Each stage required supervisor approval. On top of that, the animation was built in layers (body mechanics, facials and micro-movements kept separate) to allow non-destructive changes at any point.</p>
+<h4>Shot breakdowns</h4>
+<p>Keyframe shots animated for STIGMA, each shown next to its reference.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ020_SH020: snail references."><img src="images/stigma/sh020_ref.jpg" alt="SQ020_SH020: snail references." loading="lazy"></button><figcaption>SQ020_SH020: snail references.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ020_SH020."><img src="images/stigma/sh020.jpg" alt="SQ020_SH020." loading="lazy"></button><figcaption>SQ020_SH020.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ020_SH040."><img src="images/stigma/sh040.jpg" alt="SQ020_SH040." loading="lazy"></button><figcaption>SQ020_SH040.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ020_SH050."><img src="images/stigma/sh050.jpg" alt="SQ020_SH050." loading="lazy"></button><figcaption>SQ020_SH050.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ020_SH060."><img src="images/stigma/sh060.jpg" alt="SQ020_SH060." loading="lazy"></button><figcaption>SQ020_SH060.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ030_SH230."><img src="images/stigma/sh230.jpg" alt="SQ030_SH230." loading="lazy"></button><figcaption>SQ030_SH230.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ060_SH280."><img src="images/stigma/sh280.jpg" alt="SQ060_SH280." loading="lazy"></button><figcaption>SQ060_SH280.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ060_SH340."><img src="images/stigma/sh340.jpg" alt="SQ060_SH340." loading="lazy"></button><figcaption>SQ060_SH340.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH730."><img src="images/stigma/sh730.jpg" alt="SQ080_SH730." loading="lazy"></button><figcaption>SQ080_SH730.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH800."><img src="images/stigma/sh800.jpg" alt="SQ080_SH800." loading="lazy"></button><figcaption>SQ080_SH800.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH880."><img src="images/stigma/sh880.jpg" alt="SQ080_SH880." loading="lazy"></button><figcaption>SQ080_SH880.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH950."><img src="images/stigma/sh950.jpg" alt="SQ080_SH950." loading="lazy"></button><figcaption>SQ080_SH950.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH960."><img src="images/stigma/sh960.jpg" alt="SQ080_SH960." loading="lazy"></button><figcaption>SQ080_SH960.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH970."><img src="images/stigma/sh970.jpg" alt="SQ080_SH970." loading="lazy"></button><figcaption>SQ080_SH970.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH980."><img src="images/stigma/sh980.jpg" alt="SQ080_SH980." loading="lazy"></button><figcaption>SQ080_SH980.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH990."><img src="images/stigma/sh990.jpg" alt="SQ080_SH990." loading="lazy"></button><figcaption>SQ080_SH990.</figcaption></figure>
+<h4>Fixing passes</h4>
+<p>Fixing passes were also done on other shots, correcting intersections and small artifacts before they moved on to the next departments.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ060_SH300."><img src="images/stigma/fx300.jpg" alt="SQ060_SH300." loading="lazy"></button><figcaption>SQ060_SH300.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ060_SH350."><img src="images/stigma/fx350.jpg" alt="SQ060_SH350." loading="lazy"></button><figcaption>SQ060_SH350.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH590."><img src="images/stigma/fx590.jpg" alt="SQ080_SH590." loading="lazy"></button><figcaption>SQ080_SH590.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH860."><img src="images/stigma/fx860.jpg" alt="SQ080_SH860." loading="lazy"></button><figcaption>SQ080_SH860.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH920."><img src="images/stigma/fx920.jpg" alt="SQ080_SH920." loading="lazy"></button><figcaption>SQ080_SH920.</figcaption></figure>
+<h4>Feedback sessions</h4>
+<p>Feedback meetings with the supervisor ran once or twice a week, streamed live on Discord so collaborators could follow along, and recorded for anyone who couldn't attend. Supervisor approval in these sessions was the gate for every shot to move forward.</p>
+<h3>Part 2: Mocap</h3>
+<p>Motion capture was used for the dance shots. It sped things up, but also brought its own set of challenges.</p>
+<h4>Capture day at the MediaLab</h4>
+<p>The capture took place at the university's MediaLab using Vicon Shogun. The process covered suiting up the dancers with reflective markers, calibrating the cameras and floor, and creating and calibrating a subject for each dancer so the system could track them individually. During the takes, the software was monitored to catch issues early, like excessive contact between dancers causing tracking errors.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Dancers in mocap suits."><img src="images/stigma/mc_dancers.jpg" alt="Dancers in mocap suits." loading="lazy"></button><figcaption>Dancers in mocap suits.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Floor calibration tool and Shogun's interface. Taken from Vicon Shogun's video tutorial."><img src="images/stigma/mc_wand.jpg" alt="Floor calibration tool and Shogun's interface. Taken from Vicon Shogun's video tutorial." loading="lazy"></button><figcaption>Floor calibration tool and Shogun's interface. Taken from Vicon Shogun's video tutorial.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Calibrated space and actor calibrating the subject. Taken from Vicon Shogun's video tutorial."><img src="images/stigma/mc_space.jpg" alt="Calibrated space and actor calibrating the subject. Taken from Vicon Shogun's video tutorial." loading="lazy"></button><figcaption>Calibrated space and actor calibrating the subject. Taken from Vicon Shogun's video tutorial.</figcaption></figure>
+<h4>Cleaning in Shogun</h4>
+<p>A first cleanup pass was done directly in Shogun, using its solving filters to reduce the errors flagged on the timeline before exporting.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Cleaning errors. Taken from Vicon Shogun's video tutorial."><img src="images/stigma/mc_clean.jpg" alt="Cleaning errors. Taken from Vicon Shogun's video tutorial." loading="lazy"></button><figcaption>Cleaning errors. Taken from Vicon Shogun's video tutorial.</figcaption></figure>
+<h4>Retargeting in Maya with Human IK</h4>
+<p>In Maya, the capture was retargeted through a Human IK rig as an intermediate step, then transferred to the production rig with constraints, resulting in animation baked on every frame and ready for polish.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Retargeting in Maya."><img src="images/stigma/mc_retarget.jpg" alt="Retargeting in Maya." loading="lazy"></button><figcaption>Retargeting in Maya.</figcaption></figure>
+<h4>Scaling dance shots with Studio Library</h4>
+<p>Since all dancers followed the same choreography, base animations were stored in Studio Library and applied across rigs. Individual variations and offsets were then added so the crowd wouldn't feel repetitive.</p>
+<h4>Shot breakdowns</h4>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH610."><img src="images/stigma/mc610.jpg" alt="SQ080_SH610." loading="lazy"></button><figcaption>SQ080_SH610.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH640."><img src="images/stigma/mc640.jpg" alt="SQ080_SH640." loading="lazy"></button><figcaption>SQ080_SH640.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH650."><img src="images/stigma/mc650.jpg" alt="SQ080_SH650." loading="lazy"></button><figcaption>SQ080_SH650.</figcaption></figure>
+      </div>
+      <a href="#top" class="back-top">Back to top</a>
+    </article>
+    <hr class="article-divider">
+
+    <article id="stigma-cfx" class="article">
+      <header class="article-head">
+        <p class="article-tag">STIGMA / CFX</p>
+        <h2 class="article-title">CFX: Cloth Simulation Pipeline</h2>
+        <p class="article-lead">STIGMA's cloth pipeline covers everything from modeling garments ready to simulate to the final Alembic that goes to lookdev and render. As Lead CFX Artist, the simulation side of the pipeline was designed and documented in Houdini, while the cloth modeling documentation was written by Celia Ribas. This article follows that pipeline through Conchi's outfit for the sacrifice.</p>
+        <ul class="tool-tags" aria-label="Tools"><li>Marvelous Designer</li><li>Maya</li><li>Houdini</li><li>Vellum</li></ul>
+      </header>
+      <div class="article-body">
+<h2 id="stigma-cfx--cloth-modeling-for-simulation">Cloth Modeling for Simulation</h2>
+<h3>Modeling Conchi's outfit in Marvelous Designer</h3>
+<p>The outfit, based on a concept by Celia Ribas, needed to feel like a religious acolyte's: a veil and toga combined with loose pants and a high-neck top, balancing the religious and the tribal without losing Conchi's youthful look. It was modeled in Marvelous Designer and then taken to Maya for retopology and UVs.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Modeling Conchi's outfit in Marvelous Designer."><img src="images/stigma/c_marvelous.jpg" alt="Modeling Conchi's outfit in Marvelous Designer." loading="lazy"></button><figcaption>Modeling Conchi's outfit in Marvelous Designer.</figcaption></figure>
+<h3>From Marvelous to Maya</h3>
+<p>Two versions of the garment were exported from Marvelous: the draped 3D cloth and the flat 2D pattern. The UVs were laid out so both sides of each piece overlap as a single shell, meaning one side can be painted and the other matches automatically, which is especially useful for patterns and transparencies.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Outfit UVs."><img src="images/stigma/c_uvs.jpg" alt="Outfit UVs." loading="lazy"></button><figcaption>Outfit UVs.</figcaption></figure>
+<h3>Manual retopology with Quad Draw and Transfer Attributes</h3>
+<p>Clean quad topology was drawn over the flat patterns and then transferred onto the draped 3D garment through Transfer Attributes. The pieces were then sewn back together by merging the vertices along each seam.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Transfer Attributes settings."><img src="images/stigma/c_transfer.jpg" alt="Transfer Attributes settings." loading="lazy"></button><figcaption>Transfer Attributes settings.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Stitching seams by merging vertices."><img src="images/stigma/c_stitch.jpg" alt="Stitching seams by merging vertices." loading="lazy"></button><figcaption>Stitching seams by merging vertices.</figcaption></figure>
+<h3>Double-sided cloth without dark normals</h3>
+<p>Each garment was given a second, inner layer with a small gap between both sides, forming a rim when joined. This keeps textures correct on both faces and avoids dark normals when the fabric lifts or is seen from below.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Sculpt Geometry Tool settings and the gap between layers."><img src="images/stigma/c_double.jpg" alt="Sculpt Geometry Tool settings and the gap between layers." loading="lazy"></button><figcaption>Sculpt Geometry Tool settings and the gap between layers.</figcaption></figure>
+<h3>Topology density rules</h3>
+<p>Topology density was set with simulation in mind: denser in areas that need more folds, like the veil or skirt, and lighter in rigid areas like the belt.</p>
+<p class="credit">Cloth modeling workflow documented by Celia Ribas.</p>
+<h2 id="stigma-cfx--simulation-in-houdini">Simulation in Houdini</h2>
+<p>The Houdini setup was built to be reused across every shot, with each step placed deliberately to keep simulations stable and fast.</p>
+<h3>Preroll</h3>
+<p>When a cloth sim starts on the first frame of a moving animation, the solver has no context and the cloth tends to explode. A preroll solves this by giving the cloth time to settle onto the body before the animation begins.</p>
+<p>The preferred approach in STIGMA was building the preroll into the Maya animation: a T-pose at frame 950, a hold of the first animated pose from 975 to 1001, and the real animation from 1001 onwards, with the master controller kept still to avoid world-space jumps. When animation arrived without one, the preroll was built in Houdini instead, blending a T-pose skeleton into the first animated frame and offsetting the animation to start at 1001.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Loading the T-pose."><img src="images/stigma/c_preroll1.jpg" alt="Loading the T-pose." loading="lazy"></button><figcaption>Loading the T-pose.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Blending the T-pose into the animation."><img src="images/stigma/c_preroll2.jpg" alt="Blending the T-pose into the animation." loading="lazy"></button><figcaption>Blending the T-pose into the animation.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Offsetting the animation with timewarp."><img src="images/stigma/c_preroll3.jpg" alt="Offsetting the animation with timewarp." loading="lazy"></button><figcaption>Offsetting the animation with timewarp.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Joining the preroll and the animation."><img src="images/stigma/c_preroll4.jpg" alt="Joining the preroll and the animation." loading="lazy"></button><figcaption>Joining the preroll and the animation.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Switch keyframes."><img src="images/stigma/c_preroll5.jpg" alt="Switch keyframes." loading="lazy"></button><figcaption>Switch keyframes.</figcaption></figure>
+<h3>A lightweight body collider</h3>
+<p>The animated body was stripped of everything that doesn't affect the cloth, like hair and shoes, to keep simulations fast. Point velocity was stored to help with fast movements, and the result was published as a single collider shared by every garment.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Importing the preroll and cleaning up the collider."><img src="images/stigma/c_coll1.jpg" alt="Importing the preroll and cleaning up the collider." loading="lazy"></button><figcaption>Importing the preroll and cleaning up the collider.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: pointvelocity, optional cache and OUT_COLLIDER."><img src="images/stigma/c_coll2.jpg" alt="pointvelocity, optional cache and OUT_COLLIDER." loading="lazy"></button><figcaption>pointvelocity, optional cache and OUT_COLLIDER.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Importing the cloth from Maya."><img src="images/stigma/c_incloth.jpg" alt="Importing the cloth from Maya." loading="lazy"></button><figcaption>Importing the cloth from Maya.</figcaption></figure>
+<h3>Pin groups at 0,0,0</h3>
+<p>Redefining pinned vertices shot by shot is slow and error-prone. To avoid it, all pin groups were defined once on the cloth at the world origin, where point indices stay stable, following a pin_[piece]_GRP naming convention. They were then copied onto the posed cloth by point index, so the same pins propagate automatically to every shot.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Pin groups defined on the cloth at 0,0,0."><img src="images/stigma/c_pins0.jpg" alt="Pin groups defined on the cloth at 0,0,0." loading="lazy"></button><figcaption>Pin groups defined on the cloth at 0,0,0.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image"><img src="images/stigma/c_pins1.jpg" alt="" loading="lazy"></button></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: The posed tree."><img src="images/stigma/c_posed.jpg" alt="The posed tree." loading="lazy"></button><figcaption>The posed tree.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: groupCopy bringing the pins over to the posed cloth."><img src="images/stigma/c_groupcopy.jpg" alt="groupCopy bringing the pins over to the posed cloth." loading="lazy"></button><figcaption>groupCopy bringing the pins over to the posed cloth.</figcaption></figure>
+<h3>Optimizing cloth for Vellum</h3>
+<p>Each piece was isolated, stripped of the double-layer rim (only needed for render), remeshed into triangles for Vellum and cleaned up. The clean Maya retopo was kept aside as the render mesh for later.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Remesh, fuse and polydoctor."><img src="images/stigma/c_opt.jpg" alt="Remesh, fuse and polydoctor." loading="lazy"></button><figcaption>Remesh, fuse and polydoctor.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Each piece ready for simulation."><img src="images/stigma/c_opt2.jpg" alt="Each piece ready for simulation." loading="lazy"></button><figcaption>Each piece ready for simulation.</figcaption></figure>
+<h3>Tuning stretch, bend and damping</h3>
+<p>Every fabric was tuned mainly through two parameters: stretch stiffness, which controls how much the cloth stretches (low for elastic fabrics, high for cotton, linen or leather), and bend stiffness, which controls how it folds (low for silk and light fabrics, high for heavy, rigid ones). Damping was kept around 0.2 to 0.3 to calm vibrations without killing the motion.</p>
+<p>To iterate faster, each garment could be simulated on its own through a separate test solver, without running the whole outfit.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Setting up the vellumcloth."><img src="images/stigma/c_vcloth.jpg" alt="Setting up the vellumcloth." loading="lazy"></button><figcaption>Setting up the vellumcloth.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Stretch and Bend parameters."><img src="images/stigma/c_params.jpg" alt="Stretch and Bend parameters." loading="lazy"></button><figcaption>Stretch and Bend parameters.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Side solver for testing one piece."><img src="images/stigma/c_testsolver.jpg" alt="Side solver for testing one piece." loading="lazy"></button><figcaption>Side solver for testing one piece.</figcaption></figure>
+<h3>Pins</h3>
+<p>The pin groups were attached to the body collider, anchoring tight areas and garment edges while the rest of the fabric moves freely.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: vellumattach with the pin group."><img src="images/stigma/c_attach.jpg" alt="vellumattach with the pin group." loading="lazy"></button><figcaption>vellumattach with the pin group.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Pin constraints attached to the body."><img src="images/stigma/c_attach2.jpg" alt="Pin constraints attached to the body." loading="lazy"></button><figcaption>Pin constraints attached to the body.</figcaption></figure>
+<h3>Rigid pieces: buttons</h3>
+<p>Rigid elements attached to fabric, like buttons, were simulated with Vellum struts so they keep their shape instead of behaving like cloth.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Buttons setup."><img src="images/stigma/c_buttons.jpg" alt="Buttons setup." loading="lazy"></button><figcaption>Buttons setup.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: vellumpack connected to the STITCH merge."><img src="images/stigma/c_buttons2.jpg" alt="vellumpack connected to the STITCH merge." loading="lazy"></button><figcaption>vellumpack connected to the STITCH merge.</figcaption></figure>
+<h3>Stitching ribbons and buttons</h3>
+<p>Buttons and hanging pieces like ribbons were sewn to the garment through stitch constraints. The attachment area on the garment was generated as a mask around the pieces, and separate stitch nodes were kept for ribbons and buttons so it's easy to see at a glance what's attached where.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Creating the stitch mask."><img src="images/stigma/c_mask.jpg" alt="Creating the stitch mask." loading="lazy"></button><figcaption>Creating the stitch mask.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: The mask converted into a target group."><img src="images/stigma/c_mask2.jpg" alt="The mask converted into a target group." loading="lazy"></button><figcaption>The mask converted into a target group.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Pin group for the ribbon."><img src="images/stigma/c_ribbon.jpg" alt="Pin group for the ribbon." loading="lazy"></button><figcaption>Pin group for the ribbon.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Ribbon setup."><img src="images/stigma/c_ribbon2.jpg" alt="Ribbon setup." loading="lazy"></button><figcaption>Ribbon setup.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Ribbon stitch settings."><img src="images/stigma/c_stitch2.jpg" alt="Ribbon stitch settings." loading="lazy"></button><figcaption>Ribbon stitch settings.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Button stitch settings."><img src="images/stigma/c_stitch3.jpg" alt="Button stitch settings." loading="lazy"></button><figcaption>Button stitch settings.</figcaption></figure>
+<h3>Final simulation and caching</h3>
+<p>All garments were merged into a single solver for the full simulation and cached, the longest and heaviest step of the pipeline.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Full simulation cached."><img src="images/stigma/c_final.jpg" alt="Full simulation cached." loading="lazy"></button><figcaption>Full simulation cached.</figcaption></figure>
+<h3>From sim mesh to render mesh with Wrap</h3>
+<p>Vellum runs on a light triangulated mesh, while the render mesh, the clean Maya retopo with proper UVs, never goes through the solver. The simulation was transferred onto it with Houdini's Wrap node, which follows the surface more accurately than a Point Deform.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: The Wrap setup."><img src="images/stigma/c_wrap.jpg" alt="The Wrap setup." loading="lazy"></button><figcaption>The Wrap setup.</figcaption></figure>
+<h3>Fixing intersections without re-simulating</h3>
+<p>Remaining intersections with the body or other garments were fixed in post instead of re-simulating, using Soft Peak to push fabric along its normals and Soft Transform for directional adjustments like a sleeve or collar. Each fix was checked across the whole shot, and Delta Mush was used to clean up leftover noise.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Soft Peak."><img src="images/stigma/c_softpeak.jpg" alt="Soft Peak." loading="lazy"></button><figcaption>Soft Peak.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Soft Transform."><img src="images/stigma/c_softtr.jpg" alt="Soft Transform." loading="lazy"></button><figcaption>Soft Transform.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Delta Mush for leftover noise."><img src="images/stigma/c_mush.jpg" alt="Delta Mush for leftover noise." loading="lazy"></button><figcaption>Delta Mush for leftover noise.</figcaption></figure>
+<h3>Subdivide, merge and export</h3>
+<p>Garments were subdivided for close-ups, merged and exported as a single Alembic, the file handed over to lookdev and render.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Subdivide."><img src="images/stigma/c_subd.jpg" alt="Subdivide." loading="lazy"></button><figcaption>Subdivide.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Final cloth and Alembic export."><img src="images/stigma/c_export.jpg" alt="Final cloth and Alembic export." loading="lazy"></button><figcaption>Final cloth and Alembic export.</figcaption></figure>
+<h3>Base scenes per character</h3>
+<p>To simulate shots in chain, a base scene was prepared for each character with everything already set up and referenced, and every shot started from it. The base scene for Conchi's sacrifice outfit was built as part of this work, together with Celia Ribas and Marc Tragant on the other characters.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: Conchi's CFX base scene."><img src="images/stigma/c_base.jpg" alt="Conchi's CFX base scene." loading="lazy"></button><figcaption>Conchi's CFX base scene.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image"><img src="images/stigma/c_base2.jpg" alt="" loading="lazy"></button></figure>
+<p>Shots simulated for STIGMA. The veil seen in the process images was cut from the final outfit because it bulged over Conchi's ears.</p>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ020_SH040."><img src="images/stigma/cf040.jpg" alt="SQ020_SH040." loading="lazy"></button><figcaption>SQ020_SH040.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH510."><img src="images/stigma/cf510.jpg" alt="SQ080_SH510." loading="lazy"></button><figcaption>SQ080_SH510.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH610."><img src="images/stigma/cf610.jpg" alt="SQ080_SH610." loading="lazy"></button><figcaption>SQ080_SH610.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH640."><img src="images/stigma/cf640.jpg" alt="SQ080_SH640." loading="lazy"></button><figcaption>SQ080_SH640.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH650."><img src="images/stigma/cf650.jpg" alt="SQ080_SH650." loading="lazy"></button><figcaption>SQ080_SH650.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH660."><img src="images/stigma/cf660.jpg" alt="SQ080_SH660." loading="lazy"></button><figcaption>SQ080_SH660.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH690."><img src="images/stigma/cf690.jpg" alt="SQ080_SH690." loading="lazy"></button><figcaption>SQ080_SH690.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH730."><img src="images/stigma/cf730.jpg" alt="SQ080_SH730." loading="lazy"></button><figcaption>SQ080_SH730.</figcaption></figure>
+<figure><button class="zoom" type="button" aria-label="Enlarge image: SQ080_SH800."><img src="images/stigma/cf800.jpg" alt="SQ080_SH800." loading="lazy"></button><figcaption>SQ080_SH800.</figcaption></figure>
+      </div>
+      <a href="#top" class="back-top">Back to top</a>
+    </article>
+  </main>
+</div>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <button class="lightbox-close" type="button">Close</button>
+  <img src="" alt="">
+  <p></p>
+</div>
+
+<footer>
+  <div class="footer-logo">Luna Ghiso</div>
+  <div class="footer-links">
+    <a href="mailto:lunaghiso@gmail.com">lunaghiso@gmail.com</a>
+    <a href="https://www.linkedin.com/in/luna-ghiso-briosso/" target="_blank" rel="noopener">LinkedIn · Luna Ghiso</a>
+    <a href="https://www.artstation.com/lunaghiso" target="_blank" rel="noopener">ArtStation · Luna Ghiso</a>
+  </div>
+  <div class="footer-right">© 2026 Luna Ghiso · All rights reserved</div>
+</footer>
+
+<script>
+  // ── MOON CURSOR ──
+  const moon = document.getElementById('cursor-moon');
+  const ring = document.getElementById('cursor-ring');
+  let mx=0, my=0, rx=0, ry=0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    moon.style.left = mx + 'px';
+    moon.style.top  = my + 'px';
+  });
+
+  (function animRing(){
+    rx += (mx - rx) * 0.11;
+    ry += (my - ry) * 0.11;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    requestAnimationFrame(animRing);
+  })();
+
+  // hover glow on interactive elements
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+  });
+
+  // ── PINK STAR PARTICLES (spawn while hovering interactive elements) ──
+  const STAR_SVG = '<svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.9H21l-5.3 4.1 2 6.9L12 15.8 6.3 19.9l2-6.9L3 8.9h6.6z" fill="#FFA5AB"/></svg>';
+  let lastStar = 0;
+  document.addEventListener('mousemove', e => {
+    if (!document.body.classList.contains('cursor-hover')) return;
+    const now = performance.now();
+    if (now - lastStar < 70) return;       // throttle
+    lastStar = now;
+    const s = document.createElement('div');
+    s.className = 'cursor-star';
+    s.innerHTML = STAR_SVG;
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 14 + Math.random() * 16;
+    s.style.left = e.clientX + 'px';
+    s.style.top  = e.clientY + 'px';
+    s.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+    s.style.setProperty('--dy', Math.sin(ang) * dist + 'px');
+    s.style.width = s.style.height = (8 + Math.random() * 8) + 'px';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 700);
+  });
+
+  
+// ── STAR GUARDIAN PARALLAX STARFIELD (sprite-stamped, no per-frame blur) ──
+  (function starfield(){
+    const canvas = document.getElementById('starfield');
+    if (!canvas) return;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ctx = canvas.getContext('2d', { alpha:true });
+    let W, H, dpr;
+    const layers = [
+      { count: 70, speed: 0.02, size:[0.5,1.1], parallax: 6,  hue:'#cfd6ff', alpha:[0.25,0.6] },
+      { count: 44, speed: 0.05, size:[0.9,1.8], parallax: 14, hue:'#ffd6ec', alpha:[0.35,0.8] },
+      { count: 20, speed: 0.09, size:[1.4,2.6], parallax: 26, hue:'#ffa5ab', alpha:[0.5,1.0] },
+    ];
+    let stars = [], sparkles = [], sprites = [], sparkSprites = {};
+    let mx = 0.5, my = 0.5, scrollY = 0, running = true;
+
+    function rand(a,b){ return a + Math.random()*(b-a); }
+
+    // pre-render a soft round glow sprite once per layer (radial gradient baked in)
+    function makeStarSprite(hue, maxR){
+      const pad = maxR*4;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(pad*2);
+      const g = c.getContext('2d');
+      const cx = pad, cy = pad;
+      const grd = g.createRadialGradient(cx,cy,0, cx,cy,pad);
+      grd.addColorStop(0, hue);
+      grd.addColorStop(0.35, hue);
+      grd.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = grd;
+      g.beginPath(); g.arc(cx,cy,pad,0,Math.PI*2); g.fill();
+      return { canvas:c, pad };
+    }
+
+    // pre-render a four-point sparkle sprite once per colour
+    function makeSparkSprite(color, maxR){
+      const pad = maxR*4;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(pad*2);
+      const g = c.getContext('2d');
+      g.translate(pad,pad);
+      g.fillStyle = color;
+      g.shadowBlur = maxR*3;      // baked ONCE, not per frame
+      g.shadowColor = color;
+      g.beginPath();
+      for(let k=0;k<4;k++){
+        g.rotate(Math.PI/2);
+        g.moveTo(0,0);
+        g.quadraticCurveTo(maxR*0.28, maxR*0.28, 0, maxR*2.2);
+        g.quadraticCurveTo(-maxR*0.28, maxR*0.28, 0, 0);
+      }
+      g.fill();
+      return { canvas:c, pad };
+    }
+
+    function build(){
+      dpr = Math.min(window.devicePixelRatio||1, 2);
+      W = canvas.width = innerWidth * dpr;
+      H = canvas.height = innerHeight * dpr;
+      canvas.style.width = innerWidth+'px';
+      canvas.style.height = innerHeight+'px';
+      sprites = layers.map(L => makeStarSprite(L.hue, L.size[1]*dpr));
+      sparkSprites = {
+        '#FFA5AB': makeSparkSprite('#FFA5AB', 7*dpr),
+        '#DA627D': makeSparkSprite('#DA627D', 7*dpr),
+      };
+      stars = [];
+      layers.forEach((L,li) => {
+        for(let i=0;i<L.count;i++){
+          stars.push({
+            li, x:Math.random()*W, y:Math.random()*H,
+            r: rand(L.size[0],L.size[1])*dpr,
+            a: rand(L.alpha[0],L.alpha[1]),
+            tw: Math.random()*Math.PI*2,
+            tws: rand(0.008,0.03),
+          });
+        }
+      });
+    }
+
+    function spawnSparkle(){
+      sparkles.push({
+        x: Math.random()*W, y: Math.random()*H,
+        r: rand(3,7)*dpr, life:0, max: rand(60,120),
+        color: Math.random()>0.5 ? '#FFA5AB' : '#DA627D',
+        par: layers[2].parallax
+      });
+    }
+
+    let frame = 0;
+    function draw(){
+      if (!running) return;
+      ctx.clearRect(0,0,W,H);
+      const offX = (mx-0.5), offY = (my-0.5);
+
+      for (let i=0;i<stars.length;i++){
+        const s = stars[i], L = layers[s.li], sp = sprites[s.li];
+        s.y += L.speed*dpr;
+        s.tw += s.tws;
+        if (s.y - sp.pad > H) { s.y = -sp.pad; s.x = Math.random()*W; }
+        const px = s.x + offX*L.parallax*dpr - scrollY*L.speed*0.6*dpr;
+        const py = s.y + offY*L.parallax*dpr;
+        const tw = 0.6 + Math.sin(s.tw)*0.4;
+        const scale = s.r / (L.size[1]*dpr);      // sprite drawn at star size
+        const d = sp.pad*2*scale;
+        ctx.globalAlpha = s.a * tw;
+        ctx.drawImage(sp.canvas, px - sp.pad*scale, py - sp.pad*scale, d, d);
+      }
+      ctx.globalAlpha = 1;
+
+      if (frame % 26 === 0 && sparkles.length < 18) spawnSparkle();
+      for (let i=sparkles.length-1;i>=0;i--){
+        const s = sparkles[i];
+        if (++s.life >= s.max){ sparkles.splice(i,1); continue; }
+        const t = s.life/s.max, a = Math.sin(t*Math.PI);
+        const spr = sparkSprites[s.color];
+        const px = s.x + offX*s.par*dpr;
+        const py = s.y + offY*s.par*dpr - scrollY*0.05*dpr;
+        const scale = (s.r*(0.6+a*0.6)) / (7*dpr);
+        const d = spr.pad*2*scale;
+        ctx.globalAlpha = a;
+        ctx.drawImage(spr.canvas, px - spr.pad*scale, py - spr.pad*scale, d, d);
+      }
+      ctx.globalAlpha = 1;
+
+      frame++;
+      requestAnimationFrame(draw);
+    }
+
+    function start(){ if(!running){ running = true; requestAnimationFrame(draw); } }
+    function stop(){ running = false; }
+
+    addEventListener('resize', build, {passive:true});
+    addEventListener('mousemove', e => { mx = e.clientX/innerWidth; my = e.clientY/innerHeight; }, {passive:true});
+    addEventListener('scroll', () => { scrollY = window.scrollY; }, {passive:true});
+    // pause when tab hidden or field scrolled well out of view
+    document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+    const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? start() : stop()), {threshold:0});
+    io.observe(canvas);
+
+    build();
+    if (!reduce) draw(); else { // draw one static frame only
+      ctx.clearRect(0,0,W,H);
+      stars.forEach(s => { const L=layers[s.li], sp=sprites[s.li];
+        ctx.globalAlpha=s.a; ctx.drawImage(sp.canvas, s.x-sp.pad, s.y-sp.pad, sp.pad*2, sp.pad*2); });
+      running = false;
+    }
+  })();
+
+  
+const nav = document.querySelector('nav');
+  let navScrolled = false;
+  addEventListener('scroll', () => {
+    const past = window.scrollY > 60;
+    if (past === navScrolled) return;      // only write when state actually changes
+    navScrolled = past;
+    if (past){
+      nav.style.backdropFilter = 'blur(18px)';
+      nav.style.background = 'rgba(12,13,15,0.9)';
+    } else {
+      nav.style.backdropFilter = 'blur(0px)';
+      nav.style.background = 'linear-gradient(to bottom, rgba(12,13,15,0.96), transparent)';
+    }
+  }, {passive:true});
+
+
+
+  // ── SIDEBAR SCROLL SPY ──
+  (function(){
+    const items = document.querySelectorAll('.side-item');
+    const secLinks = document.querySelectorAll('.side-secs a');
+    const articles = document.querySelectorAll('article.article');
+    const heads = document.querySelectorAll('.article-body h2[id]');
+    let ticking = false;
+    function update(){
+      ticking = false;
+      const y = window.scrollY + window.innerHeight * 0.35;
+      let artId = articles[0].id, secId = null;
+      articles.forEach(a => { if (a.offsetTop <= y) artId = a.id; });
+      heads.forEach(h => { if (h.getBoundingClientRect().top + window.scrollY <= y && h.id.startsWith(artId)) secId = h.id; });
+      items.forEach(i => i.classList.toggle('active', i.dataset.article === artId));
+      secLinks.forEach(l => l.classList.toggle('active', l.dataset.sec === secId));
+      const act = document.querySelector('.side-item.active');
+      if (act && window.innerWidth <= 960) act.parentNode.scrollTo({ left: act.offsetLeft - 22, behavior: 'smooth' });
+    }
+    addEventListener('scroll', () => { if (!ticking){ ticking = true; requestAnimationFrame(update); } }, { passive:true });
+    update();
+  })();
+
+  // ── LIGHTBOX ──
+  (function(){
+    const lb = document.getElementById('lightbox');
+    const lbImg = lb.querySelector('img'), lbCap = lb.querySelector('p'), closeBtn = lb.querySelector('.lightbox-close');
+    let last = null;
+    function close(){ lb.classList.remove('open'); lbImg.src = ''; if (last) last.focus(); }
+    document.querySelectorAll('figure .zoom').forEach(btn => btn.addEventListener('click', () => {
+      const img = btn.querySelector('img');
+      last = btn;
+      lbImg.src = img.src; lbImg.alt = img.alt;
+      const cap = btn.parentNode.querySelector('figcaption');
+      lbCap.textContent = cap ? cap.textContent : '';
+      lb.classList.add('open'); closeBtn.focus();
+    }));
+    closeBtn.addEventListener('click', close);
+    lb.addEventListener('click', e => { if (e.target === lb) close(); });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && lb.classList.contains('open')) close(); });
+  })();
+</script>
+</body>
+</html>

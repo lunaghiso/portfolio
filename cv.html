@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV | Luna Ghiso</title>
+<meta name="description" content="CV of Luna Ghiso, 3D Animator and Character Artist.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ── SERIOUS / MUTED PALETTE ── */
+    --bg:        #0c0d0f;   /* near-black base */
+    --bg2:       #121316;   /* slightly lifted section */
+    --card:      #16181c;   /* panels */
+    --line:      rgba(255,255,255,0.08);
+    --text:      #F5E9EC;   /* near-white with a warm tint */
+    --text-dim:  #a89aa0;   /* muted mauve-grey text */
+    --accent:    #DA627D;   /* pink accent (restored) */
+    --accent-2:  #FFA5AB;   /* lighter pink for glow highlight */
+    --accent-dim:rgba(218,98,125,0.16);
+    --glow:      rgba(218,98,125,0.55);
+    --cursor:    #F5E9EC;   /* moon cursor colour */
+
+    --r-sm: 4px;
+    --r-md: 8px;
+    --r-lg: 12px;
+    --r-xl: 16px;
+    --r-pill: 999px;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  * { cursor: none !important; }
+
+  /* ── MOON CURSOR (moon inside a circle) ── */
+  #cursor-moon {
+    position: fixed; z-index: 99999; pointer-events: none;
+    width: 40px; height: 40px;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s ease, filter 0.3s ease;
+    filter: drop-shadow(0 0 6px rgba(218,98,125,0.8));
+  }
+  #cursor-moon svg { width:100%; height:100%; display:block; }
+  .cursor-hover #cursor-moon {
+    filter: drop-shadow(0 0 10px rgba(255,165,171,1)) drop-shadow(0 0 22px rgba(218,98,125,0.9));
+  }
+  #cursor-ring {
+    position: fixed; z-index: 99998; pointer-events: none;
+    width: 56px; height: 56px;
+    border: 1px solid rgba(218,98,125,0.4);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease, opacity 0.3s, border-color 0.3s;
+    opacity: 0.6;
+  }
+  .cursor-hover #cursor-ring { width: 76px; height: 76px; border-color: var(--accent-2); opacity:0.95; box-shadow:0 0 18px rgba(218,98,125,0.5); }
+
+  /* pink star particles that spawn on hover */
+  .cursor-star {
+    position: fixed; z-index: 99997; pointer-events: none;
+    width: 12px; height: 12px;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+    animation: starPop 0.7s ease-out forwards;
+  }
+  .cursor-star svg { width:100%; height:100%; display:block; filter: drop-shadow(0 0 4px rgba(255,165,171,0.9)); }
+  @keyframes starPop {
+    0%   { transform: translate(-50%,-50%) scale(0) rotate(0deg); opacity:0; }
+    30%  { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(60deg); opacity:1; }
+    100% { transform: translate(calc(-50% + var(--dx)*1.8), calc(-50% + var(--dy)*1.8 + 14px)) scale(0.2) rotate(160deg); opacity:0; }
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: radial-gradient(ellipse 120% 80% at 50% -10%, #1a1020 0%, #0e0a12 45%, var(--bg) 100%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Star Guardian parallax field */
+  #starfield {
+    position:fixed; inset:0; z-index:0; pointer-events:none; display:block;
+  }
+
+  /* subtle grain */
+  body::before {
+    content:''; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    opacity:0.25; mix-blend-mode:overlay;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:1000;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 48px;
+    background: linear-gradient(to bottom, rgba(12,13,15,0.96), transparent);
+    animation: navIn 1s ease 0.2s both;
+  }
+  @keyframes navIn { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+
+  .nav-logo {
+    font-family:'Montserrat',sans-serif; font-weight:900; font-size:15px;
+    letter-spacing:0.14em; color:var(--text); text-decoration:none; text-transform:uppercase;
+    display:flex; align-items:center; gap:11px;
+  }
+  .nav-logo .moon-icon { width:16px; height:16px; display:block; }
+  .nav-logo .moon-icon svg { width:100%; height:100%; display:block; }
+
+  .nav-links { display:flex; gap:32px; align-items:center; }
+  .nav-links a {
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em;
+    color:var(--text-dim); text-decoration:none; text-transform:uppercase;
+    transition:color 0.2s; position:relative;
+  }
+  .nav-links a::after {
+    content:''; position:absolute; bottom:-3px; left:0; width:0; height:1px;
+    background:var(--accent); transition:width 0.3s ease;
+  }
+  .nav-links a:hover { color:var(--text); }
+  .nav-links a:hover::after { width:100%; }
+  .nav-contact {
+    background:var(--accent) !important; color:#fff !important;
+    padding:9px 22px; border-radius:var(--r-pill) !important;
+    letter-spacing:0.1em; text-transform:uppercase;
+    transition:background 0.2s, opacity 0.2s !important;
+  }
+  .nav-contact:hover { opacity:0.88; color:#fff !important; }
+  .nav-contact::after { display:none !important; }
+
+  
+  .nav-links a.active { color:var(--text); }
+  .nav-links a.active::after { width:100%; }
+
+  .cv-page { position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:130px 52px 100px; }
+  .cv-grid { display:grid; grid-template-columns:340px minmax(0,1fr); gap:48px; align-items:start; }
+  .cv-side { display:flex; flex-direction:column; gap:16px; position:sticky; top:96px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:var(--r-lg); padding:26px 26px; }
+  .panel-title { font-family:'Montserrat',sans-serif; font-weight:700; font-size:14px; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+
+  /* identity */
+  .id-panel { padding:0; overflow:hidden; }
+  .id-photo { aspect-ratio:1/1; width:100%; object-fit:cover; display:block; }
+  .id-body { padding:24px 26px 26px; }
+  .cv-name { font-family:'Montserrat',sans-serif; font-weight:900; font-size:34px; line-height:1; text-transform:uppercase;
+    background:linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 55%, var(--text) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    filter:drop-shadow(0 0 16px rgba(218,98,125,0.5)); }
+  .cv-role { margin-top:10px; font-family:'Montserrat',sans-serif; font-weight:600; font-size:15px; color:var(--text); }
+  .cv-base { margin-top:4px; font-size:13px; color:var(--text-dim); }
+  .rows { list-style:none; margin-top:20px; display:flex; flex-direction:column; gap:4px; }
+  .rows a { display:flex; align-items:center; gap:12px; padding:7px 0; font-size:14px; color:var(--text-dim); text-decoration:none; transition:color .2s; }
+  .rows a:hover { color:var(--text); }
+  .rows svg { width:16px; height:16px; flex:0 0 16px; color:var(--accent); }
+  .dl-btn { display:inline-flex; align-items:center; gap:10px; margin-top:20px; background:var(--accent); color:#fff; text-decoration:none;
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; padding:11px 22px; border-radius:var(--r-pill); transition:opacity .2s, box-shadow .2s; }
+  .dl-btn:hover { opacity:.9; box-shadow:0 0 22px rgba(218,98,125,0.5); }
+
+  .sk-group + .sk-group { margin-top:16px; }
+  .sk-g-title { font-size:13px; font-weight:500; color:var(--text); margin-bottom:8px; }
+  .tagl { list-style:none; display:flex; flex-wrap:wrap; gap:7px; }
+  .tagl li { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-dim); border:1px solid var(--line); border-radius:var(--r-pill); padding:4px 10px; }
+  .kv { display:flex; justify-content:space-between; padding:8px 0; font-size:14px; border-bottom:1px solid var(--line); }
+  .kv:last-child { border-bottom:0; }
+  .kv span:last-child { color:var(--text-dim); }
+
+  /* main column */
+  .cv-main section { padding:0; }
+  .block + .block { margin-top:64px; }
+  .sec-title { font-family:'Montserrat',sans-serif; font-weight:900; font-size:clamp(26px,3.4vw,40px); text-transform:uppercase; letter-spacing:-0.01em; color:var(--text); margin-bottom:24px; }
+  .profile { font-size:19px; line-height:1.75; color:var(--text); max-width:62ch; }
+  .profile b { color:#fff; font-weight:600; }
+
+  .role { background:var(--card); border:1px solid var(--line); border-radius:var(--r-lg); padding:30px 32px; transition:border-color .3s, box-shadow .3s; }
+  .role + .role { margin-top:16px; }
+  .role:hover { border-color:rgba(218,98,125,0.6); box-shadow:0 0 26px rgba(218,98,125,0.18); }
+  .role-top { display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap; }
+  .role-title { font-family:'Montserrat',sans-serif; font-weight:700; font-size:20px; color:var(--text); }
+  .role-date { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim); white-space:nowrap; }
+  .role-org { margin-top:4px; font-size:14px; color:var(--accent-2); }
+  .role-text { margin-top:16px; font-size:15.5px; line-height:1.75; color:#ddd0d5; max-width:66ch; }
+  .role-list { margin-top:12px; list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .role-list li { position:relative; padding-left:18px; font-size:15.5px; line-height:1.65; color:#ddd0d5; max-width:66ch; }
+  .role-list li::before { content:''; position:absolute; left:0; top:.72em; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .role-list b { color:var(--text); font-weight:500; }
+  .role-link { display:inline-block; margin-top:18px; font-size:14px; color:var(--accent-2); text-decoration:none; border-bottom:1px solid rgba(255,165,171,0.4); padding-bottom:1px; }
+  .role-link:hover { color:var(--text); border-color:var(--text); }
+  :focus-visible { outline:2px solid var(--accent-2); outline-offset:3px; }
+
+  footer { background:rgba(12,13,15,0.6); padding:26px 52px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); position:relative; z-index:2; }
+  .footer-logo { font-family:'Montserrat',sans-serif; font-weight:900; font-size:13px; letter-spacing:0.14em; color:var(--text); text-transform:uppercase; }
+  .footer-links { display:flex; gap:22px; }
+  .footer-links a { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; color:var(--text-dim); text-decoration:none; text-transform:uppercase; transition:color 0.2s; }
+  .footer-links a:hover { color:var(--accent); }
+  .footer-right { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; color:var(--text-dim); }
+
+  @media (max-width:960px){
+    .cv-grid { grid-template-columns:1fr; }
+    .cv-side { position:static; }
+    .id-panel { display:grid; grid-template-columns:200px 1fr; }
+    .id-photo { height:100%; }
+  }
+  @media (max-width:768px){
+    nav { padding:16px 22px; }
+    .nav-links { gap:16px; }
+    .cv-page { padding:110px 22px 80px; }
+    .id-panel { display:block; }
+    .role { padding:24px 22px; }
+    .profile { font-size:17px; }
+    footer { flex-direction:column; gap:14px; text-align:center; padding:26px 22px; }
+    .footer-links { flex-wrap:wrap; justify-content:center; }
+  }
+  @media (hover:none){ * { cursor:auto !important; } #cursor-moon, #cursor-ring { display:none; } }
+</style>
+</head>
+<body>
+
+<canvas id="starfield" aria-hidden="true"></canvas>
+<div id="cursor-moon">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 14.5A8.5 8.5 0 1 1 10.2 4a6.7 6.7 0 0 0 9.8 10.5z" fill="#F5E9EC"/></svg>
+</div>
+<div id="cursor-ring"></div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <span class="moon-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 14.5A8.5 8.5 0 1 1 10.2 4a6.7 6.7 0 0 0 9.8 10.5z" fill="#ECECEA"/></svg></span>
+    Luna Ghiso
+  </a>
+  <div class="nav-links">
+    <a href="index.html#projects">Projects</a>
+    <a href="articles.html">Articles</a>
+    <a href="cv.html" class="active" aria-current="page">CV</a>
+    <a href="index.html#contact" class="nav-contact">Contact</a>
+  </div>
+</nav>
+
+<div class="cv-page">
+  <div class="cv-grid">
+
+    <aside class="cv-side">
+      <div class="panel id-panel">
+        <img class="id-photo" src="images/luna-portrait.jpg" alt="Luna Ghiso">
+        <div class="id-body">
+          <h1 class="cv-name">Luna Ghiso</h1>
+          <p class="cv-role">3D Animator &amp; Character Artist</p>
+          <ul class="rows">
+            <li><a href="mailto:lunaghiso@gmail.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg><span>lunaghiso@gmail.com</span></a></li>
+            <li><a href="tel:+34685769509"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg><span>+34 685 769 509</span></a></li>
+            <li><a href="https://www.linkedin.com/in/luna-ghiso-briosso/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg><span>LinkedIn</span></a></li>
+            <li><a href="https://www.artstation.com/lunaghiso" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 17.5 9 5.5l7 12"/><path d="M13.5 17.5H22l-2.5-4.3"/><path d="M4.5 21h9l-1.2-2.1H5.7z"/></svg><span>ArtStation</span></a></li>
+          </ul>
+          <a class="dl-btn" href="CV_ANIM_LunaGhisoBriosso_08_2026.pdf" download>Download PDF</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Reels</h2>
+        <ul class="rows" style="margin-top:0">
+          <li><a href="https://vimeo.com/1056564167/9705d9cd02" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m22 8-5 4 5 4z"/></svg><span>3D Animation Reel</span></a></li>
+          <li><a href="https://vimeo.com/1053531185/55fb23b7eb" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m22 8-5 4 5 4z"/></svg><span>3D Modeling Reel</span></a></li>
+          <li><a href="https://vimeo.com/1217091091/2f3f284a2f" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m22 8-5 4 5 4z"/></svg><span>CFX Reel</span></a></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Skills</h2>
+        <div class="sk-group"><p class="sk-g-title">Animation</p><ul class="tagl"><li>Facial</li><li>Body mechanics</li><li>Motion capture</li></ul></div>
+        <div class="sk-group"><p class="sk-g-title">Character Art</p><ul class="tagl"><li>Organic modeling</li><li>Hard surface modeling</li><li>UV mapping</li><li>Texturing &amp; lookdev</li></ul></div>
+        <div class="sk-group"><p class="sk-g-title">CFX &amp; Production</p><ul class="tagl"><li>Cloth simulation</li><li>Basic compositing</li><li>Project management</li></ul></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Software</h2>
+        <ul class="tagl"><li>Maya</li><li>ZBrush</li><li>Substance Painter</li><li>Mari</li><li>Houdini</li><li>Marvelous Designer</li><li>Unreal Engine</li><li>Nuke</li><li>Vicon Shogun</li></ul>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Languages</h2>
+        <div class="kv"><span>Spanish</span><span>Native</span></div>
+        <div class="kv"><span>Catalan</span><span>Native</span></div>
+        <div class="kv"><span>English</span><span>C1</span></div>
+      </div>
+    </aside>
+
+    <main class="cv-main">
+      <section class="block" aria-labelledby="h-profile">
+        <h2 class="sec-title" id="h-profile">Profile</h2>
+        <p class="profile">3D Artist focused on <b>character animation</b> and visual storytelling. Experienced with Maya, ZBrush, Substance Painter, Mari and Houdini, with solid <b>acting</b> fundamentals and strong <b>body mechanics</b> understanding. Versatile across realistic and stylized animation, and continually evolving my approach through practice and exploration.</p>
+      </section>
+
+      <section class="block" aria-labelledby="h-exp">
+        <h2 class="sec-title" id="h-exp">Experience</h2>
+
+        <article class="role">
+          <div class="role-top"><h3 class="role-title">Lead Animator &amp; CFX Artist</h3><span class="role-date">2024 – Present</span></div>
+          <p class="role-org">STIGMA, realistic 3D short film</p>
+          <ul class="role-list">
+            <li><b>Supervised the animation department</b>, animating keyframe and motion capture shots, giving feedback, assigning shots, arranging meetings and managing a team of 20+ animators.</li>
+            <li><b>Modeled main characters</b> and served as lead CFX artist, responsible for the characters' clothing simulations and texture work.</li>
+          </ul>
+          <a class="role-link" href="articles.html#stigma">Read the STIGMA breakdowns</a>
+        </article>
+
+        <article class="role">
+          <div class="role-top"><h3 class="role-title">Freelance Animator</h3><span class="role-date">2025 – Present</span></div>
+          <p class="role-org">Student short films and nightclub visuals</p>
+          <p class="role-text">Animated principal characters across five 3D student short films, and modeled organic and hard-surface props as needed.</p>
+          <ul class="role-list">
+            <li><b>O'Paraiso:</b> stylized character animation.</li>
+            <li><b>Nemesis:</b> realistic human animation and walk cycles.</li>
+            <li><b>Sounds Like Home:</b> quadruped animation.</li>
+            <li><b>Out Cold:</b> quadruped animation.</li>
+            <li><b>Davi:</b> cartoon character animation.</li>
+            <li><b>DJ Dokku at Razzmatazz:</b> 3D models, textures and animations for the nightclub visuals.</li>
+          </ul>
+        </article>
+
+        <article class="role">
+          <div class="role-top"><h3 class="role-title">3D Animator Intern</h3><span class="role-date">2025</span></div>
+          <p class="role-org">Good Sleep Games</p>
+          <p class="role-text">Developed character animations for a 3D Unreal Engine game, contributing to set dressing through PCG workflows and concept art development.</p>
+        </article>
+      </section>
+
+      <section class="block" aria-labelledby="h-edu">
+        <h2 class="sec-title" id="h-edu">Education</h2>
+        <article class="role">
+          <div class="role-top"><h3 class="role-title">Bachelor's Degree in Animation and VFX</h3><span class="role-date">2022 – 2026</span></div>
+          <p class="role-org">La Salle Ramon Llull, Barcelona</p>
+          <p class="role-text">Graduated with highest honors in Virtual Production with UE5 and in Showreel.</p>
+        </article>
+      </section>
+    </main>
+
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo">Luna Ghiso</div>
+  <div class="footer-links">
+    <a href="mailto:lunaghiso@gmail.com">lunaghiso@gmail.com</a>
+    <a href="https://www.linkedin.com/in/luna-ghiso-briosso/" target="_blank" rel="noopener">LinkedIn · Luna Ghiso</a>
+    <a href="https://www.artstation.com/lunaghiso" target="_blank" rel="noopener">ArtStation · Luna Ghiso</a>
+  </div>
+  <div class="footer-right">© 2026 Luna Ghiso · All rights reserved</div>
+</footer>
+
+<script>
+  // ── MOON CURSOR ──
+  const moon = document.getElementById('cursor-moon');
+  const ring = document.getElementById('cursor-ring');
+  let mx=0, my=0, rx=0, ry=0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    moon.style.left = mx + 'px';
+    moon.style.top  = my + 'px';
+  });
+
+  (function animRing(){
+    rx += (mx - rx) * 0.11;
+    ry += (my - ry) * 0.11;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    requestAnimationFrame(animRing);
+  })();
+
+  // hover glow on interactive elements
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+  });
+
+  // ── PINK STAR PARTICLES (spawn while hovering interactive elements) ──
+  const STAR_SVG = '<svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.9H21l-5.3 4.1 2 6.9L12 15.8 6.3 19.9l2-6.9L3 8.9h6.6z" fill="#FFA5AB"/></svg>';
+  let lastStar = 0;
+  document.addEventListener('mousemove', e => {
+    if (!document.body.classList.contains('cursor-hover')) return;
+    const now = performance.now();
+    if (now - lastStar < 70) return;       // throttle
+    lastStar = now;
+    const s = document.createElement('div');
+    s.className = 'cursor-star';
+    s.innerHTML = STAR_SVG;
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 14 + Math.random() * 16;
+    s.style.left = e.clientX + 'px';
+    s.style.top  = e.clientY + 'px';
+    s.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+    s.style.setProperty('--dy', Math.sin(ang) * dist + 'px');
+    s.style.width = s.style.height = (8 + Math.random() * 8) + 'px';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 700);
+  });
+
+  
+// ── STAR GUARDIAN PARALLAX STARFIELD (sprite-stamped, no per-frame blur) ──
+  (function starfield(){
+    const canvas = document.getElementById('starfield');
+    if (!canvas) return;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ctx = canvas.getContext('2d', { alpha:true });
+    let W, H, dpr;
+    const layers = [
+      { count: 70, speed: 0.02, size:[0.5,1.1], parallax: 6,  hue:'#cfd6ff', alpha:[0.25,0.6] },
+      { count: 44, speed: 0.05, size:[0.9,1.8], parallax: 14, hue:'#ffd6ec', alpha:[0.35,0.8] },
+      { count: 20, speed: 0.09, size:[1.4,2.6], parallax: 26, hue:'#ffa5ab', alpha:[0.5,1.0] },
+    ];
+    let stars = [], sparkles = [], sprites = [], sparkSprites = {};
+    let mx = 0.5, my = 0.5, scrollY = 0, running = true;
+
+    function rand(a,b){ return a + Math.random()*(b-a); }
+
+    // pre-render a soft round glow sprite once per layer (radial gradient baked in)
+    function makeStarSprite(hue, maxR){
+      const pad = maxR*4;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(pad*2);
+      const g = c.getContext('2d');
+      const cx = pad, cy = pad;
+      const grd = g.createRadialGradient(cx,cy,0, cx,cy,pad);
+      grd.addColorStop(0, hue);
+      grd.addColorStop(0.35, hue);
+      grd.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = grd;
+      g.beginPath(); g.arc(cx,cy,pad,0,Math.PI*2); g.fill();
+      return { canvas:c, pad };
+    }
+
+    // pre-render a four-point sparkle sprite once per colour
+    function makeSparkSprite(color, maxR){
+      const pad = maxR*4;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(pad*2);
+      const g = c.getContext('2d');
+      g.translate(pad,pad);
+      g.fillStyle = color;
+      g.shadowBlur = maxR*3;      // baked ONCE, not per frame
+      g.shadowColor = color;
+      g.beginPath();
+      for(let k=0;k<4;k++){
+        g.rotate(Math.PI/2);
+        g.moveTo(0,0);
+        g.quadraticCurveTo(maxR*0.28, maxR*0.28, 0, maxR*2.2);
+        g.quadraticCurveTo(-maxR*0.28, maxR*0.28, 0, 0);
+      }
+      g.fill();
+      return { canvas:c, pad };
+    }
+
+    function build(){
+      dpr = Math.min(window.devicePixelRatio||1, 2);
+      W = canvas.width = innerWidth * dpr;
+      H = canvas.height = innerHeight * dpr;
+      canvas.style.width = innerWidth+'px';
+      canvas.style.height = innerHeight+'px';
+      sprites = layers.map(L => makeStarSprite(L.hue, L.size[1]*dpr));
+      sparkSprites = {
+        '#FFA5AB': makeSparkSprite('#FFA5AB', 7*dpr),
+        '#DA627D': makeSparkSprite('#DA627D', 7*dpr),
+      };
+      stars = [];
+      layers.forEach((L,li) => {
+        for(let i=0;i<L.count;i++){
+          stars.push({
+            li, x:Math.random()*W, y:Math.random()*H,
+            r: rand(L.size[0],L.size[1])*dpr,
+            a: rand(L.alpha[0],L.alpha[1]),
+            tw: Math.random()*Math.PI*2,
+            tws: rand(0.008,0.03),
+          });
+        }
+      });
+    }
+
+    function spawnSparkle(){
+      sparkles.push({
+        x: Math.random()*W, y: Math.random()*H,
+        r: rand(3,7)*dpr, life:0, max: rand(60,120),
+        color: Math.random()>0.5 ? '#FFA5AB' : '#DA627D',
+        par: layers[2].parallax
+      });
+    }
+
+    let frame = 0;
+    function draw(){
+      if (!running) return;
+      ctx.clearRect(0,0,W,H);
+      const offX = (mx-0.5), offY = (my-0.5);
+
+      for (let i=0;i<stars.length;i++){
+        const s = stars[i], L = layers[s.li], sp = sprites[s.li];
+        s.y += L.speed*dpr;
+        s.tw += s.tws;
+        if (s.y - sp.pad > H) { s.y = -sp.pad; s.x = Math.random()*W; }
+        const px = s.x + offX*L.parallax*dpr - scrollY*L.speed*0.6*dpr;
+        const py = s.y + offY*L.parallax*dpr;
+        const tw = 0.6 + Math.sin(s.tw)*0.4;
+        const scale = s.r / (L.size[1]*dpr);      // sprite drawn at star size
+        const d = sp.pad*2*scale;
+        ctx.globalAlpha = s.a * tw;
+        ctx.drawImage(sp.canvas, px - sp.pad*scale, py - sp.pad*scale, d, d);
+      }
+      ctx.globalAlpha = 1;
+
+      if (frame % 26 === 0 && sparkles.length < 18) spawnSparkle();
+      for (let i=sparkles.length-1;i>=0;i--){
+        const s = sparkles[i];
+        if (++s.life >= s.max){ sparkles.splice(i,1); continue; }
+        const t = s.life/s.max, a = Math.sin(t*Math.PI);
+        const spr = sparkSprites[s.color];
+        const px = s.x + offX*s.par*dpr;
+        const py = s.y + offY*s.par*dpr - scrollY*0.05*dpr;
+        const scale = (s.r*(0.6+a*0.6)) / (7*dpr);
+        const d = spr.pad*2*scale;
+        ctx.globalAlpha = a;
+        ctx.drawImage(spr.canvas, px - spr.pad*scale, py - spr.pad*scale, d, d);
+      }
+      ctx.globalAlpha = 1;
+
+      frame++;
+      requestAnimationFrame(draw);
+    }
+
+    function start(){ if(!running){ running = true; requestAnimationFrame(draw); } }
+    function stop(){ running = false; }
+
+    addEventListener('resize', build, {passive:true});
+    addEventListener('mousemove', e => { mx = e.clientX/innerWidth; my = e.clientY/innerHeight; }, {passive:true});
+    addEventListener('scroll', () => { scrollY = window.scrollY; }, {passive:true});
+    // pause when tab hidden or field scrolled well out of view
+    document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+    const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? start() : stop()), {threshold:0});
+    io.observe(canvas);
+
+    build();
+    if (!reduce) draw(); else { // draw one static frame only
+      ctx.clearRect(0,0,W,H);
+      stars.forEach(s => { const L=layers[s.li], sp=sprites[s.li];
+        ctx.globalAlpha=s.a; ctx.drawImage(sp.canvas, s.x-sp.pad, s.y-sp.pad, sp.pad*2, sp.pad*2); });
+      running = false;
+    }
+  })();
+
+  
+const nav = document.querySelector('nav');
+  let navScrolled = false;
+  addEventListener('scroll', () => {
+    const past = window.scrollY > 60;
+    if (past === navScrolled) return;      // only write when state actually changes
+    navScrolled = past;
+    if (past){
+      nav.style.backdropFilter = 'blur(18px)';
+      nav.style.background = 'rgba(12,13,15,0.9)';
+    } else {
+      nav.style.backdropFilter = 'blur(0px)';
+      nav.style.background = 'linear-gradient(to bottom, rgba(12,13,15,0.96), transparent)';
+    }
+  }, {passive:true});
+
+
+</script>
+</body>
+</html>
