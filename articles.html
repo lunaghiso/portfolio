@@ -239,6 +239,14 @@
   }
   @media (hover:none){ * { cursor:auto !important; } #cursor-moon, #cursor-ring { display:none; } }
   @media (prefers-reduced-motion:reduce){ html { scroll-behavior:auto; } }
+  @media (max-width:600px){
+    nav { padding:14px 16px !important; }
+    .nav-logo { font-size:0 !important; gap:0 !important; }
+    .nav-logo .moon-icon { width:20px; height:20px; }
+    .nav-links { gap:12px !important; }
+    .nav-links a { font-size:10px !important; letter-spacing:0.06em !important; }
+    .nav-contact { padding:7px 12px !important; }
+  }
 </style>
 </head>
 <body id="top">
@@ -262,6 +270,7 @@
     Luna Ghiso
   </a>
   <div class="nav-links">
+    <a href="index.html">Home</a>
     <a href="index.html#projects">Projects</a>
     <a href="articles.html" class="active" aria-current="page">Articles</a>
     <a href="cv.html">CV</a>
